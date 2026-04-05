@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 public class GeneralAssemblyDocument {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "general_assembly_doc_seq")
-    @SequenceGenerator(name = "general_assembly_doc_seq", sequenceName = "GENERAL_ASSEMBLY_DOC_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "assembly_year", nullable = false)

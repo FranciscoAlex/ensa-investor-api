@@ -22,8 +22,7 @@ import java.util.List;
 public class GeneralAssembly {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "general_assembly_seq")
-    @SequenceGenerator(name = "general_assembly_seq", sequenceName = "GENERAL_ASSEMBLY_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "slug_id", nullable = false, length = 100, unique = true)

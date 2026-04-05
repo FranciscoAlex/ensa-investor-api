@@ -20,8 +20,7 @@ import java.time.LocalDateTime;
 public class HistoricalMilestone {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "historical_milestone_seq")
-    @SequenceGenerator(name = "historical_milestone_seq", sequenceName = "HISTORICAL_MILESTONE_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 500)

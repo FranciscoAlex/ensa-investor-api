@@ -20,8 +20,7 @@ import java.time.LocalDateTime;
 public class BusinessIndicator {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "business_indicator_seq")
-    @SequenceGenerator(name = "business_indicator_seq", sequenceName = "BUSINESS_INDICATOR_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 500)

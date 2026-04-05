@@ -19,8 +19,7 @@ import java.time.LocalDateTime;
 public class Communication {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "communication_seq")
-    @SequenceGenerator(name = "communication_seq", sequenceName = "COMMUNICATION_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 500)

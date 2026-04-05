@@ -22,7 +22,7 @@ spring:
     properties:
       hibernate:
         boot:
-          allow_jdbc_metadata_access: true
+          allow_jdbc_metadata_access: false
 
   flyway:
     enabled: true

@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 public class ExternalAuditor {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "external_auditor_seq")
-    @SequenceGenerator(name = "external_auditor_seq", sequenceName = "EXTERNAL_AUDITOR_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "auditor_name", nullable = false, length = 500)

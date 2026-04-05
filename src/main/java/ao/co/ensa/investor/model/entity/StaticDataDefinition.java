@@ -31,8 +31,7 @@ import java.time.LocalDateTime;
 public class StaticDataDefinition {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "static_data_seq")
-    @SequenceGenerator(name = "static_data_seq", sequenceName = "STATIC_DATA_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 100)

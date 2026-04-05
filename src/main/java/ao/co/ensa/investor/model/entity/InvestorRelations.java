@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 public class InvestorRelations {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "investor_relations_seq")
-    @SequenceGenerator(name = "investor_relations_seq", sequenceName = "INVESTOR_RELATIONS_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "email", length = 255)

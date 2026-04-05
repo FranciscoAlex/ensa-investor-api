@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 public class Subsidiary {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "subsidiary_seq")
-    @SequenceGenerator(name = "subsidiary_seq", sequenceName = "SUBSIDIARY_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "entity_name", nullable = false, length = 500)

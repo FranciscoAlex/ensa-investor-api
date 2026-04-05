@@ -19,8 +19,7 @@ import java.time.LocalDateTime;
 public class InvestorProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "investor_seq")
-    @SequenceGenerator(name = "investor_seq", sequenceName = "INVESTOR_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)

@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 public class FinancialStatement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "financial_statement_seq")
-    @SequenceGenerator(name = "financial_statement_seq", sequenceName = "FINANCIAL_STATEMENT_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)

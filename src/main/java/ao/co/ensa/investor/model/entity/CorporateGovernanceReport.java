@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 public class CorporateGovernanceReport {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "corp_governance_report_seq")
-    @SequenceGenerator(name = "corp_governance_report_seq", sequenceName = "CORP_GOVERNANCE_REPORT_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 500)

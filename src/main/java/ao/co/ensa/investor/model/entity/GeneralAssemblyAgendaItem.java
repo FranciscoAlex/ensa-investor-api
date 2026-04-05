@@ -14,8 +14,7 @@ import lombok.*;
 public class GeneralAssemblyAgendaItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "general_assembly_agenda_seq")
-    @SequenceGenerator(name = "general_assembly_agenda_seq", sequenceName = "GENERAL_ASSEMBLY_AGENDA_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

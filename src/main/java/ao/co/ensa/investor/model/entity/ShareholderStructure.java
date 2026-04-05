@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 public class ShareholderStructure {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "shareholder_structure_seq")
-    @SequenceGenerator(name = "shareholder_structure_seq", sequenceName = "SHAREHOLDER_STRUCTURE_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "shareholder_name", nullable = false, length = 500)

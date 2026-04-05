@@ -18,8 +18,7 @@ import java.time.LocalDateTime;
 public class BodivaShareHistory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bodiva_share_history_seq")
-    @SequenceGenerator(name = "bodiva_share_history_seq", sequenceName = "BODIVA_SHARE_HISTORY_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "record_date", nullable = false)
