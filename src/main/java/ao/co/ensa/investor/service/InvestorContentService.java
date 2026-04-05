@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ao.co.ensa.investor.model.entity.ContentBlock;
+import ao.co.ensa.investor.repository.ContentBlockRepository;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
@@ -20,8 +22,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.LocalDate;
+import java.nio.file.StandardCopyOption;import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +45,7 @@ public class InvestorContentService {
     private final EventRepository eventRepository;
     private final SubsidiaryRepository subsidiaryRepository;
     private final GeneralAssemblyDocumentRepository generalAssemblyDocumentRepository;
+    private final ContentBlockRepository contentBlockRepository;
     private final GeneralAssemblyRepository generalAssemblyRepository;
     private final ShareholderStructureRepository shareholderStructureRepository;
     private final InvestorRelationsRepository investorRelationsRepository;
@@ -55,32 +57,48 @@ public class InvestorContentService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
-    @Value("${app.json.data.dir:./uploads/json-data}")
-    private String jsonDataDir;
-
     private <T> T readJson(String filename, Class<T> type) {
-        try {
-            Path externalFile = Paths.get(jsonDataDir, filename);
-            ObjectMapper mapper = new ObjectMapper();
-            if (Files.exists(externalFile)) {
-                return mapper.readValue(externalFile.toFile(), type);
-            }
-            ClassPathResource resource = new ClassPathResource(filename);
-            try (InputStream is = resource.getInputStream()) {
-                return mapper.readValue(is, type);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load " + filename, e);
-        }
+        ObjectMapper mapper = new ObjectMapper();
+        // 1. Try DB first
+        return contentBlockRepository.findByBlockKey(filename)
+            .map(block -> {
+                try {
+                    return mapper.readValue(block.getData(), type);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to parse content block: " + filename, e);
+                }
+            })
+            .orElseGet(() -> {
+                // 2. Not in DB yet — load from classpath and persist (auto-seed)
+                try {
+                    ClassPathResource resource = new ClassPathResource(filename);
+                    try (InputStream is = resource.getInputStream()) {
+                        String json = new String(is.readAllBytes());
+                        T dto = mapper.readValue(json, type);
+                        ContentBlock block = new ContentBlock();
+                        block.setBlockKey(filename);
+                        block.setData(json);
+                        block.setUpdatedAt(java.time.LocalDateTime.now());
+                        contentBlockRepository.save(block);
+                        return dto;
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to load " + filename, e);
+                }
+            });
     }
 
     private void writeJson(String filename, Object dto) {
         try {
-            Path dir = Paths.get(jsonDataDir);
-            Files.createDirectories(dir);
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            mapper.writeValue(dir.resolve(filename).toFile(), dto);
+            String json = mapper.writeValueAsString(dto);
+            ContentBlock block = contentBlockRepository.findByBlockKey(filename)
+                .orElseGet(ContentBlock::new);
+            block.setBlockKey(filename);
+            block.setData(json);
+            block.setUpdatedAt(java.time.LocalDateTime.now());
+            contentBlockRepository.save(block);
         } catch (Exception e) {
             throw new RuntimeException("Failed to save " + filename, e);
         }
