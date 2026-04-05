@@ -3,10 +3,10 @@
 # ============================================================
 spring:
   datasource:
-    url: jdbc:oracle:thin:@${ORACLE_HOST}:${ORACLE_PORT}:${ORACLE_SID}
-    username: ${ORACLE_USERNAME}
-    password: ${ORACLE_PASSWORD}
-    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:mysql://${MYSQL_HOST:${MYSQLHOST}}:${MYSQL_PORT:${MYSQLPORT:3306}}/${MYSQL_DATABASE:${MYSQLDATABASE:railway}}?useSSL=true&allowPublicKeyRetrieval=true&serverTimezone=Africa/Luanda
+    username: ${MYSQL_USER:${MYSQLUSER:root}}
+    password: ${MYSQL_PASSWORD:${MYSQL_ROOT_PASSWORD:${MYSQLPASSWORD:}}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 30
       minimum-idle: 5
@@ -20,6 +20,7 @@ spring:
       ddl-auto: none
 
   flyway:
+    enabled: ${FLYWAY_ENABLED:false}
     clean-on-validation-error: false
 
 logging:

@@ -5,9 +5,10 @@ metadata:
   namespace: ensa-investor-prod
 data:
   SPRING_PROFILES_ACTIVE: "prod"
-  ORACLE_HOST: "oracle-db-service.ensa-db.svc.cluster.local"
-  ORACLE_PORT: "1521"
-  ORACLE_SID: "ENSA_PROD"
+  MYSQL_DATABASE: "railway"
+  MYSQL_HOST: "${RAILWAY_PRIVATE_DOMAIN}"
+  MYSQL_PORT: "3306"
+  MYSQL_USER: "root"
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
   SMTP_HOST: "smtp.office365.com"

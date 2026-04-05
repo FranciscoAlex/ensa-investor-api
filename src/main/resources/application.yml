@@ -16,7 +16,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.OracleDialect
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.MySQLDialect}
     open-in-view: false
 
   # ---- Flyway Migration ----
@@ -28,9 +28,11 @@ spring:
   # ---- Redis ----
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:${REDISHOST:localhost}}
+      port: ${REDIS_PORT:${REDISPORT:6379}}
+      username: ${REDIS_USERNAME:${REDISUSER:}}
+      password: ${REDIS_PASSWORD:${REDISPASSWORD:}}
+      url: ${REDIS_URL:}
       timeout: 5000ms
       lettuce:
         pool:

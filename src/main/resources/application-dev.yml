@@ -3,11 +3,10 @@
 # ============================================================
 spring:
   datasource:
-    # Use service name format for PDB (XEPDB1): @//host:port/service_name
-    url: jdbc:oracle:thin:@//${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}/${ORACLE_SID:XEPDB1}
-    username: ${ORACLE_USERNAME:SYSTEM}
-    password: ${ORACLE_PASSWORD:ensa_dev_password}
-    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:mysql://${MYSQL_HOST:${MYSQLHOST:localhost}}:${MYSQL_PORT:${MYSQLPORT:3306}}/${MYSQL_DATABASE:${MYSQLDATABASE:railway}}?useSSL=true&allowPublicKeyRetrieval=true&serverTimezone=Africa/Luanda
+    username: ${MYSQL_USER:${MYSQLUSER:root}}
+    password: ${MYSQL_PASSWORD:${MYSQL_ROOT_PASSWORD:${MYSQLPASSWORD:}}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -19,7 +18,8 @@ spring:
       ddl-auto: validate
 
   flyway:
-    clean-on-validation-error: false   # Never clean (Oracle SYSTEM schema cannot be cleaned; use dedicated user)
+    enabled: ${FLYWAY_ENABLED:false}
+    clean-on-validation-error: false
 
   # ---- Email: Mailhog for local dev (view emails at http://localhost:8025) ----
   mail:

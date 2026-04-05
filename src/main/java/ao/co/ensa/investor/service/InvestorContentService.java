@@ -1022,9 +1022,10 @@ public class InvestorContentService {
         try {
             ClassPathResource resource = new ClassPathResource("plano_estrategico.json");
             try (InputStream is = resource.getInputStream()) {
+                ObjectMapper mapper = new ObjectMapper();
                 return mapper.readValue(is, PlanoEstrategicoDTO.class);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to load plano_estrategico.json from classpath", e);
         }
     }
@@ -1032,10 +1033,13 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", key = "'planoEstrategico'")
     public PlanoEstrategicoDTO savePlanoEstrategico(PlanoEstrategicoDTO dto) {
         try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
             ClassPathResource resource = new ClassPathResource("plano_estrategico.json");
-            mapper.writerWithDefaultPrettyPrinter().writeValue(new File(resource.getURI()), dto);
+            java.io.File file = resource.getFile();
+            mapper.writeValue(file, dto);
             return dto;
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to save plano_estrategico.json", e);
         }
     }
