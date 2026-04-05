@@ -693,7 +693,6 @@ public class InvestorContentService {
      * (or call POST /api/v1/investor-content/cache/evict to refresh cache without redeploy).
      */
     @Cacheable(value = "investorContent", key = "'organogram'")
-    @Transactional(readOnly = true)
     public OrganigramDTO getOrganogram() {
         try {
             ClassPathResource resource = new ClassPathResource("organograma.json");
@@ -734,7 +733,6 @@ public class InvestorContentService {
     // ---- Calendário de Divulgações (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'calendarioDivulgacoes'")
-    @Transactional(readOnly = true)
     public CalendarioDivulgacoesDTO getCalendarioDivulgacoes() {
         try {
             ClassPathResource resource = new ClassPathResource("calendario_divulgacoes.json");
@@ -765,7 +763,6 @@ public class InvestorContentService {
     // ---- Estatutos Sociais (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'estatutos'")
-    @Transactional(readOnly = true)
     public EstatutosDTO getEstatutos() {
         try {
             ClassPathResource resource = new ClassPathResource("estatutos.json");
@@ -796,7 +793,6 @@ public class InvestorContentService {
     // ---- Annual Report Destaque (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'annualReportDestaque'")
-    @Transactional(readOnly = true)
     public AnnualReportDestaqueDTO getAnnualReportDestaque() {
         try {
             ClassPathResource resource = new ClassPathResource("annual_report_destaque.json");
@@ -827,7 +823,6 @@ public class InvestorContentService {
     // ---- Órgãos Sociais Members (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'organMembers'")
-    @Transactional(readOnly = true)
     public OrganMembersDTO getOrganMembers() {
         try {
             ClassPathResource resource = new ClassPathResource("organ_members.json");
@@ -858,7 +853,6 @@ public class InvestorContentService {
     // ---- Carousel Slides (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'carouselSlides'")
-    @Transactional(readOnly = true)
     public CarouselSlidesDTO getCarouselSlides() {
         try {
             ClassPathResource resource = new ClassPathResource("carousel_slides.json");
@@ -902,7 +896,6 @@ public class InvestorContentService {
     // ---- Who We Are (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'aboutWhoWeAre'")
-    @Transactional(readOnly = true)
     public WhoWeAreContentDTO getWhoWeAreContent() {
         try {
             ClassPathResource resource = new ClassPathResource("who_we_are.json");
@@ -934,7 +927,6 @@ public class InvestorContentService {
     }
 
     @Cacheable(value = "investorContent", key = "'financialIndicatorsPage'")
-    @Transactional(readOnly = true)
     public FinancialIndicatorsPageDTO getFinancialIndicatorsPage() {
         try {
             ClassPathResource resource = new ClassPathResource("financial_indicators.json");
@@ -968,7 +960,6 @@ public class InvestorContentService {
     // ---- CEO Message (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'ceoMessage'")
-    @Transactional(readOnly = true)
     public CeoMessageDTO getCeoMessage() {
         try {
             ClassPathResource resource = new ClassPathResource("ceo_message.json");
@@ -1017,7 +1008,6 @@ public class InvestorContentService {
 
     // ---- Plano Estratégico ----
     @Cacheable(value = "investorContent", key = "'planoEstrategico'")
-    @Transactional(readOnly = true)
     public PlanoEstrategicoDTO getPlanoEstrategico() {
         try {
             ClassPathResource resource = new ClassPathResource("plano_estrategico.json");
