@@ -55,6 +55,37 @@ public class InvestorContentService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
+    @Value("${app.json.data.dir:./uploads/json-data}")
+    private String jsonDataDir;
+
+    private <T> T readJson(String filename, Class<T> type) {
+        try {
+            Path externalFile = Paths.get(jsonDataDir, filename);
+            ObjectMapper mapper = new ObjectMapper();
+            if (Files.exists(externalFile)) {
+                return mapper.readValue(externalFile.toFile(), type);
+            }
+            ClassPathResource resource = new ClassPathResource(filename);
+            try (InputStream is = resource.getInputStream()) {
+                return mapper.readValue(is, type);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load " + filename, e);
+        }
+    }
+
+    private void writeJson(String filename, Object dto) {
+        try {
+            Path dir = Paths.get(jsonDataDir);
+            Files.createDirectories(dir);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
+            mapper.writeValue(dir.resolve(filename).toFile(), dto);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save " + filename, e);
+        }
+    }
+
     // ---- Historical milestones ----
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'historicalMilestones'")
@@ -694,15 +725,7 @@ public class InvestorContentService {
      */
     @Cacheable(value = "investorContent", key = "'organogram'")
     public OrganigramDTO getOrganogram() {
-        try {
-            ClassPathResource resource = new ClassPathResource("organograma.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, OrganigramDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load organograma.json from classpath", e);
-        }
+        return readJson("organograma.json", OrganigramDTO.class);
     }
 
     /**
@@ -716,14 +739,7 @@ public class InvestorContentService {
             if (dto.getMeta() != null) {
                 dto.getMeta().setUpdatedAt(java.time.LocalDate.now().toString());
             }
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-
-            // Write to the classpath resource file (works in dev; in prod the JSON is inside the JAR,
-            // so we also write to a well-known external path that can be mounted).
-            ClassPathResource resource = new ClassPathResource("organograma.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("organograma.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save organograma.json", e);
@@ -734,26 +750,14 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'calendarioDivulgacoes'")
     public CalendarioDivulgacoesDTO getCalendarioDivulgacoes() {
-        try {
-            ClassPathResource resource = new ClassPathResource("calendario_divulgacoes.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, CalendarioDivulgacoesDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load calendario_divulgacoes.json from classpath", e);
-        }
+        return readJson("calendario_divulgacoes.json", CalendarioDivulgacoesDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'calendarioDivulgacoes'")
     public CalendarioDivulgacoesDTO saveCalendarioDivulgacoes(CalendarioDivulgacoesDTO dto) {
         try {
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("calendario_divulgacoes.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("calendario_divulgacoes.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save calendario_divulgacoes.json", e);
@@ -764,26 +768,14 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'estatutos'")
     public EstatutosDTO getEstatutos() {
-        try {
-            ClassPathResource resource = new ClassPathResource("estatutos.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, EstatutosDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load estatutos.json from classpath", e);
-        }
+        return readJson("estatutos.json", EstatutosDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'estatutos'")
     public EstatutosDTO saveEstatutos(EstatutosDTO dto) {
         try {
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("estatutos.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("estatutos.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save estatutos.json", e);
@@ -794,26 +786,14 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'annualReportDestaque'")
     public AnnualReportDestaqueDTO getAnnualReportDestaque() {
-        try {
-            ClassPathResource resource = new ClassPathResource("annual_report_destaque.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, AnnualReportDestaqueDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load annual_report_destaque.json from classpath", e);
-        }
+        return readJson("annual_report_destaque.json", AnnualReportDestaqueDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'annualReportDestaque'")
     public AnnualReportDestaqueDTO saveAnnualReportDestaque(AnnualReportDestaqueDTO dto) {
         try {
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("annual_report_destaque.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("annual_report_destaque.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save annual_report_destaque.json", e);
@@ -824,26 +804,14 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'organMembers'")
     public OrganMembersDTO getOrganMembers() {
-        try {
-            ClassPathResource resource = new ClassPathResource("organ_members.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, OrganMembersDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load organ_members.json from classpath", e);
-        }
+        return readJson("organ_members.json", OrganMembersDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'organMembers'")
     public OrganMembersDTO saveOrganMembers(OrganMembersDTO dto) {
         try {
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("organ_members.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("organ_members.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save organ_members.json", e);
@@ -854,15 +822,7 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'carouselSlides'")
     public CarouselSlidesDTO getCarouselSlides() {
-        try {
-            ClassPathResource resource = new ClassPathResource("carousel_slides.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, CarouselSlidesDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load carousel_slides.json from classpath", e);
-        }
+        return readJson("carousel_slides.json", CarouselSlidesDTO.class);
     }
 
     public String uploadCarouselSlideImage(String slideId, MultipartFile file) {
@@ -882,11 +842,7 @@ public class InvestorContentService {
     public CarouselSlidesDTO saveCarouselSlides(CarouselSlidesDTO dto) {
         try {
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("carousel_slides.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("carousel_slides.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save carousel_slides.json", e);
@@ -897,15 +853,7 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'aboutWhoWeAre'")
     public WhoWeAreContentDTO getWhoWeAreContent() {
-        try {
-            ClassPathResource resource = new ClassPathResource("who_we_are.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, WhoWeAreContentDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load who_we_are.json from classpath", e);
-        }
+        return readJson("who_we_are.json", WhoWeAreContentDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'aboutWhoWeAre'")
@@ -914,12 +862,7 @@ public class InvestorContentService {
             dto.setRoute("/ensa/quem-somos");
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-
-            ClassPathResource resource = new ClassPathResource("who_we_are.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("who_we_are.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save who_we_are.json", e);
@@ -928,15 +871,7 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'financialIndicatorsPage'")
     public FinancialIndicatorsPageDTO getFinancialIndicatorsPage() {
-        try {
-            ClassPathResource resource = new ClassPathResource("financial_indicators.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, FinancialIndicatorsPageDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load financial_indicators.json from classpath", e);
-        }
+        return readJson("financial_indicators.json", FinancialIndicatorsPageDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'financialIndicatorsPage'")
@@ -945,12 +880,7 @@ public class InvestorContentService {
             dto.setRoute("/ensa/indicadores-financeiros");
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-
-            ClassPathResource resource = new ClassPathResource("financial_indicators.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("financial_indicators.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save financial_indicators.json", e);
@@ -961,26 +891,14 @@ public class InvestorContentService {
 
     @Cacheable(value = "investorContent", key = "'ceoMessage'")
     public CeoMessageDTO getCeoMessage() {
-        try {
-            ClassPathResource resource = new ClassPathResource("ceo_message.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, CeoMessageDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load ceo_message.json from classpath", e);
-        }
+        return readJson("ceo_message.json", CeoMessageDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'ceoMessage'")
     public CeoMessageDTO saveCeoMessage(CeoMessageDTO dto) {
         try {
             dto.setUpdatedAt(java.time.LocalDate.now().toString());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("ceo_message.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("ceo_message.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save ceo_message.json", e);
@@ -1009,25 +927,13 @@ public class InvestorContentService {
     // ---- Plano Estratégico ----
     @Cacheable(value = "investorContent", key = "'planoEstrategico'")
     public PlanoEstrategicoDTO getPlanoEstrategico() {
-        try {
-            ClassPathResource resource = new ClassPathResource("plano_estrategico.json");
-            try (InputStream is = resource.getInputStream()) {
-                ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(is, PlanoEstrategicoDTO.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load plano_estrategico.json from classpath", e);
-        }
+        return readJson("plano_estrategico.json", PlanoEstrategicoDTO.class);
     }
 
     @CacheEvict(value = "investorContent", key = "'planoEstrategico'")
     public PlanoEstrategicoDTO savePlanoEstrategico(PlanoEstrategicoDTO dto) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            ClassPathResource resource = new ClassPathResource("plano_estrategico.json");
-            java.io.File file = resource.getFile();
-            mapper.writeValue(file, dto);
+            writeJson("plano_estrategico.json", dto);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save plano_estrategico.json", e);
