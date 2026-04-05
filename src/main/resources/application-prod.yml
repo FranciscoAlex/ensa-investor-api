@@ -22,11 +22,12 @@ spring:
     properties:
       hibernate:
         boot:
-          allow_jdbc_metadata_access: false
+          allow_jdbc_metadata_access: true
 
   flyway:
-    enabled: ${FLYWAY_ENABLED:false}
+    enabled: ${FLYWAY_ENABLED:true}
     clean-on-validation-error: false
+    baseline-on-migrate: true
 
 logging:
   level:
