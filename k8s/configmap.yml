@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ensa-api-config
+  namespace: ensa-investor-prod
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  ORACLE_HOST: "oracle-db-service.ensa-db.svc.cluster.local"
+  ORACLE_PORT: "1521"
+  ORACLE_SID: "ENSA_PROD"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  SMTP_HOST: "smtp.office365.com"
+  SMTP_PORT: "587"
+  CORS_ORIGINS: "https://investidor.ensa.co.ao,https://www.ensa.co.ao"

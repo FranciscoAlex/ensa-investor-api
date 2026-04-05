@@ -1,0 +1,239 @@
+{
+  "meta": {
+    "version": "1.0",
+    "updatedAt": "2026-04-04",
+    "description": "Organograma ENSA"
+  },
+  "topNodes": [
+    {
+      "id": "GAD",
+      "label": "Gabinete da Administracao (GAD)",
+      "type": "support",
+      "bgColor": "#11448b",
+      "textColor": "#ffffff"
+    },
+    {
+      "id": "CA",
+      "label": "Conselho de Administracao",
+      "type": "governing",
+      "bgColor": "#d3161c",
+      "textColor": "#ffffff"
+    },
+    {
+      "id": "CE",
+      "label": "Comissao Executiva",
+      "type": "governing",
+      "bgColor": "#d3161c",
+      "textColor": "#ffffff",
+      "parentId": "CA"
+    },
+    {
+      "id": "SEC",
+      "label": "Secretario Societario (SEC)",
+      "type": "support",
+      "bgColor": "#11448b",
+      "textColor": "#ffffff"
+    }
+  ],
+  "directors": [
+    {
+      "id": "dir-ca1",
+      "topNodeId": "CA",
+      "personLabel": "PCA - Presidente",
+      "name": "Presidente do CA",
+      "title": "Presidente do Conselho de Administracao",
+      "initials": "PCA",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#d3161c",
+      "displayOrder": 1,
+      "departments": []
+    },
+    {
+      "id": "dir-ca2",
+      "topNodeId": "CA",
+      "personLabel": "ADM - Vogal",
+      "name": "Vogal do Conselho de Administracao",
+      "title": "Vogal",
+      "initials": "VCA",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#d3161c",
+      "displayOrder": 2,
+      "departments": []
+    },
+    {
+      "id": "dir-ce1",
+      "topNodeId": "CE",
+      "personLabel": "CEO - Administrador Executivo",
+      "name": "Administrador Executivo",
+      "title": "Administrador Executivo (CEO)",
+      "initials": "CEO",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": true,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#d3161c",
+      "displayOrder": 1,
+      "departments": []
+    },
+    {
+      "id": "dir-ce2",
+      "topNodeId": "CE",
+      "personLabel": "ADM - Matilde Guebe",
+      "name": "Matilde Guebe",
+      "title": "Administradora Executiva",
+      "initials": "MG",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#11448b",
+      "displayOrder": 2,
+      "departments": [
+        {
+          "id": "DCE",
+          "label": "Direccao Comercial Empresas e Instituicoes (DCE)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        },
+        {
+          "id": "DMK",
+          "label": "Direccao de Marketing e Comunicacao (DMK)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "dir-ce3",
+      "topNodeId": "CE",
+      "personLabel": "ADM - Financeiro",
+      "name": "Administrador Financeiro",
+      "title": "Administrador Executivo - Area Financeira",
+      "initials": "AF",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#11448b",
+      "displayOrder": 3,
+      "departments": [
+        {
+          "id": "DFI",
+          "label": "Direccao Financeira (DFI)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        },
+        {
+          "id": "DCI",
+          "label": "Direccao de Contabilidade e Informacao de Gestao (DCI)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "dir-ce4",
+      "topNodeId": "CE",
+      "personLabel": "ADM - Operacoes",
+      "name": "Administrador de Operacoes",
+      "title": "Administrador Executivo - Operacoes",
+      "initials": "AO",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#11448b",
+      "displayOrder": 4,
+      "departments": [
+        {
+          "id": "DSG",
+          "label": "Direccao de Seguros Gerais (DSG)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        },
+        {
+          "id": "DSV",
+          "label": "Direccao de Seguros de Vida e Saude (DSV)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        },
+        {
+          "id": "DRE",
+          "label": "Direccao de Resseguros (DRE)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "dir-ce5",
+      "topNodeId": "CE",
+      "personLabel": "ADM - Suporte",
+      "name": "Administrador de Suporte",
+      "title": "Administrador Executivo - Suporte e Recursos",
+      "initials": "AS",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#11448b",
+      "displayOrder": 5,
+      "departments": [
+        {
+          "id": "DRH",
+          "label": "Direccao de Recursos Humanos (DRH)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        },
+        {
+          "id": "DTI",
+          "label": "Direccao de Tecnologias de Informacao (DTI)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        },
+        {
+          "id": "DAD",
+          "label": "Direccao Administrativa (DAD)",
+          "bgColor": "#11448b",
+          "textColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "dir-gad1",
+      "topNodeId": "GAD",
+      "personLabel": "GAD - Chefe de Gabinete",
+      "name": "Chefe de Gabinete da Administracao",
+      "title": "Chefe de Gabinete",
+      "initials": "CG",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#11448b",
+      "displayOrder": 1,
+      "departments": []
+    },
+    {
+      "id": "dir-sec1",
+      "topNodeId": "SEC",
+      "personLabel": "SEC - Secretario Societario",
+      "name": "Secretario Societario",
+      "title": "Secretario Societario",
+      "initials": "SS",
+      "photoUrl": null,
+      "bio": "",
+      "isCEO": false,
+      "cardBgColor": "#ffffff",
+      "cardTextColor": "#11448b",
+      "displayOrder": 1,
+      "departments": []
+    }
+  ]
+}

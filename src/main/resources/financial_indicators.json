@@ -1,0 +1,68 @@
+{
+  "route": "/ensa/indicadores-financeiros",
+  "title": "Principais Indicadores da Companhia em 2025",
+  "year": 2025,
+  "updatedAt": "2026-04-04",
+  "mainIndicators": [
+    { "id": "kpi-colaboradores", "label": "Colaboradores", "value": "458", "change": "11 VS 2024", "isPositive": false, "iconKey": "People" },
+    { "id": "kpi-agencias", "label": "Agências e Pontos de Venda", "value": "42", "change": "", "isPositive": true, "iconKey": "Store" },
+    { "id": "kpi-apolices", "label": "Apólices Activas", "value": "84 288", "change": "20% VS 2024", "isPositive": true, "iconKey": "Assignment" },
+    { "id": "kpi-renovacao", "label": "Taxa de Renovação", "value": "75%", "change": "9% VS 2024", "isPositive": false, "iconKey": "Autorenew" },
+    { "id": "kpi-premios", "label": "Prémios e Seus Adicionais", "value": "155 mM", "change": "25% VS 2024", "isPositive": true, "iconKey": "Payments" },
+    { "id": "kpi-sinistralidade", "label": "Taxa de Sinistralidade", "value": "63%", "change": "37% VS 2024", "isPositive": false, "iconKey": "LocalHospital" },
+    { "id": "kpi-quota", "label": "Quota de Mercado", "value": "28%", "change": "1% VS 2024", "isPositive": true, "iconKey": "PieChart" },
+    { "id": "kpi-fundos", "label": "Fundos de Pensões", "value": "22", "change": "5 VS 2024", "isPositive": true, "iconKey": "AccountBalanceWallet" },
+    { "id": "kpi-participantes", "label": "Participantes Activos Dos Fundo", "value": "9 237", "change": "14% VS 2024", "isPositive": true, "iconKey": "Group" },
+    { "id": "kpi-valor-fundos", "label": "Valor dos Fundos de Pensões", "value": "529 mM", "change": "9% VS 2024", "isPositive": true, "iconKey": "AccountBalance" },
+    { "id": "kpi-activo", "label": "Activo", "value": "299 mM", "change": "37% VS 2024", "isPositive": true, "iconKey": "BusinessCenter" },
+    { "id": "kpi-resultado", "label": "Resultado Líquido", "value": "6,4 mM", "change": "20% VS 2024", "isPositive": false, "iconKey": "Insights" },
+    { "id": "kpi-roe", "label": "Retorno do Capital Próprio", "value": "10%", "change": "23% VS 2024", "isPositive": false, "iconKey": "TrendingUp" },
+    { "id": "kpi-cobertura", "label": "Grau de Cobertura das Provisões", "value": "125%", "change": "3% VS 2024", "isPositive": true, "iconKey": "Security" },
+    { "id": "kpi-solvencia", "label": "Margem de Solvência", "value": "258%", "change": "35% VS 2024", "isPositive": true, "iconKey": "VerifiedUser" }
+  ],
+  "highlightSection": {
+    "eyebrow": "FOCO DO INVESTIDOR",
+    "title": "Evolução do Resultado Líquido",
+    "description": "O lucro líquido da ENSA atingiu 8.05 mil milhões de AOA em 2024, reflectindo uma performance histórica e um crescimento de mais de 50% em relação ao exercício anterior.",
+    "annualGrowthValue": "+52%",
+    "annualGrowthLabel": "CRESCIMENTO ANUAL",
+    "cornerLabel": "RESULTADO LÍQUIDO 2024",
+    "cornerValue": "4.3B AOA",
+    "chartData": [
+      { "year": "2022", "value": 5.3, "growth": "" },
+      { "year": "2023", "value": 5.28, "growth": "-0.3%" },
+      { "year": "2024", "value": 8.05, "growth": "+52%" }
+    ]
+  },
+  "premiumsChart": {
+    "title": "Evolução dos Prémios Brutos Emitidos",
+    "footnote": "* Unidade: Milhões de Kwanzas. Fonte: Relatórios de Mercado 2021-2025.",
+    "accentText": "",
+    "data": [
+      { "year": "2021", "value": 278032, "growth": "" },
+      { "year": "2022", "value": 312744, "growth": "21%" },
+      { "year": "2023", "value": 379756, "growth": "24%" },
+      { "year": "2024", "value": 473129, "growth": "12%" },
+      { "year": "2025", "value": 586912, "growth": "21%" }
+    ]
+  },
+  "claimsChart": {
+    "title": "Evolução dos Custos com Sinistros",
+    "footnote": "",
+    "accentText": "+26% vs 2024",
+    "data": [
+      { "year": "2023", "value": 163649, "growth": "" },
+      { "year": "2024", "value": 161390, "growth": "13%" },
+      { "year": "2025", "value": 242450, "growth": "26%" }
+    ]
+  },
+  "riskSection": {
+    "title": "Variação da Taxa de Sinistralidade",
+    "panelTitle": "Análise de Risco",
+    "data": [
+      { "year": "2023", "rate": 43, "change": "" },
+      { "year": "2024", "rate": 34, "change": "-9 p.p." },
+      { "year": "2025", "rate": 45, "change": "+11 p.p." }
+    ]
+  }
+}

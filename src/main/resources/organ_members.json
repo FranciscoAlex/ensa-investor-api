@@ -1,0 +1,62 @@
+{
+  "updatedAt": "2024-07-11",
+  "organs": [
+    {
+      "id": "mesa-assembleia-geral",
+      "title": "Mesa da Assembleia Geral",
+      "description": "Órgão que dirige as reuniões dos accionistas, assegurando o exercício dos seus direitos e a legalidade das deliberações.",
+      "color": "#1e293b",
+      "members": [
+        { "name": "Dr. Nguabi Salvador", "role": "Presidente", "photoUrl": "" },
+        { "name": "Dr. Mário João", "role": "Vice-Presidente", "photoUrl": "" },
+        { "name": "Dr. Belarmino Cardoso", "role": "Secretário", "photoUrl": "" }
+      ]
+    },
+    {
+      "id": "comissao-executiva",
+      "title": "Comissão Executiva",
+      "description": "Órgão que assegura a gestão corrente da ENSA, implementando o plano estratégico aprovado pelo Conselho de Administração.",
+      "color": "#e63c2e",
+      "members": [
+        { "name": "Eng. Mário Mota Lemos", "role": "Presidente da Comissão Executiva", "photoUrl": "" },
+        { "name": "Dra. Matilde Guebe", "role": "Administradora Executiva", "photoUrl": "" },
+        { "name": "Dra. Amália Quintão Barbosa", "role": "Administradora Executiva", "photoUrl": "" },
+        { "name": "Dr. Ildo do Nascimento", "role": "Administrador Executivo", "photoUrl": "" },
+        { "name": "Dr. Silvano Pinto Adriano", "role": "Administrador Executivo", "photoUrl": "" }
+      ]
+    },
+    {
+      "id": "conselho-fiscal",
+      "title": "Conselho Fiscal",
+      "description": "Órgão de fiscalização independente que zela pelo cumprimento da lei e dos estatutos, auditando as contas e a gestão.",
+      "color": "#059669",
+      "members": [
+        { "name": "Dr. Ednilson de Sousa", "role": "Presidente", "photoUrl": "" },
+        { "name": "Dr. Nelson Mutindi", "role": "Vogal", "photoUrl": "" },
+        { "name": "Dr. António de Matos", "role": "Vogal", "photoUrl": "" },
+        { "name": "Dr. Alberto Tchipamba", "role": "Vogal", "photoUrl": "" },
+        { "name": "Dr. Romy Jerome", "role": "Vogal", "photoUrl": "" }
+      ]
+    },
+    {
+      "id": "auditoria",
+      "title": "Auditoria",
+      "description": "Entidade responsável pela certificação das contas e avaliação externa independente do sistema de controlo interno.",
+      "color": "#334155",
+      "members": [
+        { "name": "Ernst & Young Angola (EY)", "role": "Auditor Externo", "photoUrl": "" }
+      ]
+    },
+    {
+      "id": "comissao-remuneracao",
+      "title": "Comissão de Remuneração",
+      "description": "Órgão que define as políticas de remuneração e incentivos dos órgãos sociais, alinhando os interesses da gestão com os dos accionistas.",
+      "color": "#164993",
+      "members": [
+        { "name": "Dr. Gorki da Silva Salvador", "role": "Presidente", "photoUrl": "" },
+        { "name": "Dr. Osvaldo da Cruz Muixi", "role": "Vogal", "photoUrl": "" },
+        { "name": "Dr. João dos Santos Paula", "role": "Vogal", "photoUrl": "" }
+      ]
+    }
+  ]
+}

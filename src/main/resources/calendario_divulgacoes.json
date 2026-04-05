@@ -1,0 +1,28 @@
+{
+  "updatedAt": "2026-04-05",
+  "groups": [
+    {
+      "id": "assembleias-gerais",
+      "title": "Assembleias Gerais",
+      "color": "#10b981",
+      "items": [
+        { "date": "20/08/2025", "desc": "Assembleia Geral Ordinária" }
+      ]
+    },
+    {
+      "id": "divulgacao-contas",
+      "title": "Divulgação de Contas",
+      "color": "#164993",
+      "items": [
+        { "date": "15/05/2025", "desc": "Apresentação de Resultados Q1" },
+        { "date": "10/11/2025", "desc": "Publicação do Relatório Intercalar" }
+      ]
+    },
+    {
+      "id": "proximos-eventos",
+      "title": "Próximos Eventos ENSA",
+      "color": "#e63c2e",
+      "items": []
+    }
+  ]
+}

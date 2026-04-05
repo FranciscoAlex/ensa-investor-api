@@ -1,0 +1,33 @@
+# macOS resource forks and metadata (must match in subdirs)
+**/._*
+**/.DS_Store
+**/.AppleDouble
+**/.LSOverride
+
+# Thumbnails
+Thumbs.db
+ehthumbs.db
+
+# IDE / editor
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Build output (we build inside the image)
+target/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Docs and misc (optional, keeps context smaller)
+*.md
+!README.md

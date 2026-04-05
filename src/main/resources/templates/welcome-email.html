@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Bem-vindo ao Portal do Investidor ENSA</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #164993; padding: 24px; text-align: center; border-radius: 4px 4px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Portal do Investidor</h1>
+        <p style="color: #c8d9f5; margin: 6px 0 0 0; font-size: 14px;">ENSA — Empresa Nacional de Seguros de Angola</p>
+    </div>
+
+    <div style="background-color: #f9fafb; padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 4px 4px;">
+        <h2 style="color: #164993; margin-top: 0;">Bem-vindo, <span th:text="${name}">Investidor</span>!</h2>
+
+        <p>A sua conta no <strong th:text="${platformName}">Portal do Investidor ENSA</strong> foi ativada com sucesso.</p>
+
+        <p>Agora tem acesso a:</p>
+        <ul style="padding-left: 20px; color: #555;">
+            <li>Relatórios financeiros e resultados trimestrais</li>
+            <li>Comunicados e press releases</li>
+            <li>Informação sobre Assembleias Gerais</li>
+            <li>Indicadores de mercado (BODIVA)</li>
+            <li>Documentos de governação corporativa</li>
+        </ul>
+
+        <div style="text-align: center; margin: 32px 0;">
+            <a th:href="${loginUrl}" href="#"
+               style="display: inline-block; padding: 14px 32px; background-color: #164993; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                Aceder ao Portal
+            </a>
+        </div>
+
+        <p style="font-size: 14px; color: #666;">
+            Se tiver alguma questão, não hesite em contactar a nossa equipa de Relações com Investidores.
+        </p>
+    </div>
+
+    <div style="padding: 16px; text-align: center;">
+        <p style="font-size: 12px; color: #999; margin: 0;">
+            ENSA — Empresa Nacional de Seguros de Angola &bull; <span th:text="${platformName}">Portal do Investidor</span>
+        </p>
+        <p style="font-size: 11px; color: #bbb; margin: 4px 0 0 0;">
+            Este email foi enviado automaticamente, por favor não responda diretamente.
+        </p>
+    </div>
+</body>
+</html>

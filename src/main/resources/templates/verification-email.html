@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Ative a sua conta</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #1a5276;">Bem-vindo ao <span th:text="${platformName}">ENSA Investor Portal</span></h2>
+    <p>Olá <strong th:text="${name}">User</strong>,</p>
+    <p>Obrigado por se registar. Para ativar a sua conta e começar a utilizar o portal, clique no link abaixo:</p>
+    <p style="margin: 24px 0;">
+        <a th:href="${verificationLink}" th:text="${verificationLink}"
+           style="display: inline-block; padding: 12px 24px; background-color: #1a5276; color: #fff; text-decoration: none; border-radius: 4px;">Ativar conta</a>
+    </p>
+    <p style="font-size: 14px; color: #666;">Ou copie e cole este link no seu navegador:</p>
+    <p style="font-size: 12px; word-break: break-all; color: #888;" th:text="${verificationLink}">link</p>
+    <p style="font-size: 14px; color: #666;">Este link é válido por 24 horas. Se não criou uma conta, pode ignorar este email.</p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;"/>
+    <p style="font-size: 12px; color: #999;">ENSA — Empresa Nacional de Seguros de Angola</p>
+</body>
+</html>

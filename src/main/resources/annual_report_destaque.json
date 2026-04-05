@@ -1,0 +1,29 @@
+{
+  "updatedAt": "2024-07-11",
+  "badgeLabel": "DESTAQUE 2024",
+  "subtitle": "Relatório e Contas Consolidado",
+  "headline": "Resultados que reflectem a nossa Solidez",
+  "description": "Em 2024, a ENSA alcançou marcos históricos, com um crescimento de 52% no resultado líquido e a consolidação da liderança de mercado.",
+  "downloadUrl": "",
+  "downloadLabel": "Baixar Relatório Completo (12.4 MB)",
+  "statCards": [
+    {
+      "id": "roe",
+      "label": "ROE (Rentabilidade do Capital)",
+      "value": "13%",
+      "trend": "+4% vs 2023",
+      "progressValue": 65,
+      "showProgress": true,
+      "note": ""
+    },
+    {
+      "id": "ipo",
+      "label": "Privatização (IPO)",
+      "value": "Listada na BODIVA",
+      "trend": "",
+      "progressValue": 0,
+      "showProgress": false,
+      "note": "Transparência e Governação de padrão mundial."
+    }
+  ]
+}

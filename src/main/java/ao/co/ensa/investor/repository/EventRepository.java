@@ -1,0 +1,13 @@
+package ao.co.ensa.investor.repository;
+
+import ao.co.ensa.investor.model.entity.Event;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public interface EventRepository extends JpaRepository<Event, Long> {
+
+    List<Event> findAllByActiveTrueOrderByEventDateAsc();
+    List<Event> findByEventDateAfterAndActiveTrueOrderByEventDateAsc(LocalDateTime from);
+}

@@ -1,0 +1,68 @@
+{
+  "updatedAt": "",
+  "pdfUrl": "",
+  "pdfLabel": "Descarregar Plano Estratégico 2026-2028",
+  "pdfTotalPages": 10,
+  "foundation": [
+    {
+      "id": "missao",
+      "title": "Missão",
+      "content": "Apoiar os clientes com soluções de protecção de risco, promovendo o valor da vida individual e empresarial, rentabilizando o valor para os accionistas, com responsabilidade social.",
+      "color": "#164993"
+    },
+    {
+      "id": "visao",
+      "title": "Visão",
+      "content": "Ser a primeira escolha do mercado, com colaboradores motivados e com sustentabilidade financeira.",
+      "color": "#e63c2e"
+    },
+    {
+      "id": "valores",
+      "title": "Valores",
+      "content": "Respeito, Integridade, Empatia, Responsabilidade Social, Inovação, Transparência e Ética.",
+      "color": "#f59e0b"
+    }
+  ],
+  "pillars": [
+    {
+      "id": "pilar-1",
+      "title": "Liderança de Mercado",
+      "description": "Fortalecer a posição de líder no sector segurador angolano, assegurando um crescimento sustentado e a criação de valor a longo prazo."
+    },
+    {
+      "id": "pilar-2",
+      "title": "Excelência no Serviço",
+      "description": "Elevar os padrões de serviço ao cliente, garantindo uma experiência superior e personalizada em todos os pontos de contacto."
+    },
+    {
+      "id": "pilar-3",
+      "title": "Solidez Técnica",
+      "description": "Reforçar a solidez técnica e a eficiência operacional, com rigor na gestão de risco e optimização dos processos internos."
+    },
+    {
+      "id": "pilar-4",
+      "title": "Transformação Digital",
+      "description": "Acelerar a inovação tecnológica, modernizando a infraestrutura e os canais digitais para responder às exigências do mercado actual."
+    }
+  ],
+  "commitmentTitle": "Compromisso com o Futuro",
+  "commitmentText": "Através da execução rigorosa do nosso Plano Estratégico, a ENSA reafirma o seu papel como motor do mercado segurador angolano, focada na sustentabilidade e na inovação tecnológica.",
+  "commitmentStats": [
+    { "id": "stat-1", "value": "+46", "label": "Anos de História" },
+    { "id": "stat-2", "value": "12B", "label": "Capital (AOA)" }
+  ],
+  "modernizationItems": [
+    {
+      "id": "mod-1",
+      "title": "ENSA App",
+      "description": "Lançamento de canais digitais inovadores para proximidade com o cliente.",
+      "accentColor": "#164993"
+    },
+    {
+      "id": "mod-2",
+      "title": "Novos Produtos Saúde",
+      "description": "Expansão da oferta com produtos competitivos como o Health Yami.",
+      "accentColor": "#e63c2e"
+    }
+  ]
+}
