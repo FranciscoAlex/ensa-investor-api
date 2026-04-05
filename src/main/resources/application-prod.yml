@@ -28,6 +28,8 @@ spring:
     enabled: true
     clean-on-validation-error: false
     baseline-on-migrate: true
+    validate-on-migrate: false
+    out-of-order: true
 
 logging:
   level:
