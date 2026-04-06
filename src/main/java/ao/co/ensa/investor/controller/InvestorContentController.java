@@ -5,13 +5,11 @@ import ao.co.ensa.investor.service.InvestorContentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -51,34 +49,6 @@ public class InvestorContentController {
     @Operation(summary = "Get historical milestone by ID")
     public ResponseEntity<HistoricalMilestoneDTO> getHistoricalMilestoneById(@PathVariable Long id) {
         return ResponseEntity.ok(investorContentService.getHistoricalMilestoneById(id));
-    }
-
-    // ---- BODIVA share history ----
-    @GetMapping("/bodiva-share-history")
-    @Operation(summary = "List BODIVA share history", description = "ENSA share indicators history (BODIVA API data)")
-    public ResponseEntity<List<BodivaShareHistoryDTO>> getBodivaShareHistory(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return okList(investorContentService.getBodivaShareHistory(from, to));
-    }
-
-    @GetMapping("/bodiva-share-history/{id}")
-    @Operation(summary = "Get BODIVA share record by ID")
-    public ResponseEntity<BodivaShareHistoryDTO> getBodivaShareHistoryById(@PathVariable Long id) {
-        return ResponseEntity.ok(investorContentService.getBodivaShareHistoryById(id));
-    }
-
-    @PostMapping("/bodiva-share-history")
-    @Operation(summary = "Create BODIVA share history record")
-    public ResponseEntity<BodivaShareHistoryDTO> createBodivaShareHistory(@RequestBody BodivaShareHistoryDTO dto) {
-        return ResponseEntity.status(201).body(investorContentService.createBodivaShareHistory(dto));
-    }
-
-    @DeleteMapping("/bodiva-share-history/{id}")
-    @Operation(summary = "Delete BODIVA share history record")
-    public ResponseEntity<Void> deleteBodivaShareHistory(@PathVariable Long id) {
-        investorContentService.deleteBodivaShareHistory(id);
-        return ResponseEntity.noContent().build();
     }
 
     // ---- Board of Directors ----

@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 public class InvestorContentService {
 
     private final HistoricalMilestoneRepository historicalMilestoneRepository;
-    private final BodivaShareHistoryRepository bodivaShareHistoryRepository;
     private final BoardMemberRepository boardMemberRepository;
     private final CorporateGovernanceReportRepository corporateGovernanceReportRepository;
     private final FinancialStatementRepository financialStatementRepository;
@@ -174,46 +173,6 @@ public class InvestorContentService {
         return historicalMilestoneRepository.findById(id)
             .map(this::toMilestoneDTO)
             .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
-    }
-
-    // ---- BODIVA share history ----
-    @Transactional(readOnly = true)
-    @Cacheable(value = "investorContent", key = "'bodiva:' + (#from != null ? #from : 'all') + ':' + (#to != null ? #to : 'all')")
-    public List<BodivaShareHistoryDTO> getBodivaShareHistory(LocalDate from, LocalDate to) {
-        List<BodivaShareHistory> list = from != null && to != null
-            ? bodivaShareHistoryRepository.findByRecordDateBetweenOrderByRecordDateDesc(from, to)
-            : bodivaShareHistoryRepository.findAllByOrderByRecordDateDesc();
-        return list.stream().map(this::toBodivaDTO).collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    @Cacheable(value = "investorContent", key = "'bodivaId:' + #id")
-    public BodivaShareHistoryDTO getBodivaShareHistoryById(Long id) {
-        return bodivaShareHistoryRepository.findById(id)
-            .map(this::toBodivaDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("BodivaShareHistory", "id", id));
-    }
-
-    @Transactional
-    @CacheEvict(value = "investorContent", allEntries = true)
-    public BodivaShareHistoryDTO createBodivaShareHistory(BodivaShareHistoryDTO dto) {
-        BodivaShareHistory entity = BodivaShareHistory.builder()
-            .recordDate(dto.getRecordDate())
-            .sharePrice(dto.getSharePrice())
-            .volume(dto.getVolume())
-            .openingPrice(dto.getOpeningPrice())
-            .closingPrice(dto.getClosingPrice())
-            .highPrice(dto.getHighPrice())
-            .lowPrice(dto.getLowPrice())
-            .notes(dto.getNotes())
-            .build();
-        return toBodivaDTO(bodivaShareHistoryRepository.save(entity));
-    }
-
-    @Transactional
-    @CacheEvict(value = "investorContent", allEntries = true)
-    public void deleteBodivaShareHistory(Long id) {
-        bodivaShareHistoryRepository.deleteById(id);
     }
 
     // ---- Board members ----
@@ -1091,13 +1050,6 @@ public class InvestorContentService {
             .milestoneYear(e.getMilestoneYear()).displayOrder(e.getDisplayOrder())
             .imageUrl(e.getImageUrl()).contentHtml(e.getContentHtml()).eventTitle(e.getEventTitle())
             .createdAt(e.getCreatedAt()).build();
-    }
-
-    private BodivaShareHistoryDTO toBodivaDTO(BodivaShareHistory e) {
-        return BodivaShareHistoryDTO.builder()
-            .id(e.getId()).recordDate(e.getRecordDate()).sharePrice(e.getSharePrice()).volume(e.getVolume())
-            .openingPrice(e.getOpeningPrice()).closingPrice(e.getClosingPrice()).highPrice(e.getHighPrice()).lowPrice(e.getLowPrice())
-            .notes(e.getNotes()).createdAt(e.getCreatedAt()).build();
     }
 
     private BoardMemberDTO toBoardMemberDTO(BoardMember e) {
