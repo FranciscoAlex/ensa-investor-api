@@ -25,9 +25,7 @@ spring:
           allow_jdbc_metadata_access: false
 
   flyway:
-    enabled: true
-    baseline-on-migrate: true
-    validate-on-migrate: false
+    enabled: false
 
 logging:
   level:

@@ -8,11 +8,23 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Configuration
 public class CorsConfig {
+
+    private static final List<String> SAFE_DEFAULT_ORIGIN_PATTERNS = List.of(
+        "https://*.ensa.co.ao",
+        "https://*.railway.app",
+        "http://localhost:3000",
+        "http://localhost:4173",
+        "http://localhost:4200",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:4173",
+        "http://127.0.0.1:4200"
+    );
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -26,14 +38,11 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
-            .map(String::trim)
-            .filter(origin -> !origin.isBlank())
-            .collect(Collectors.toList()));
+        configuration.setAllowedOriginPatterns(buildAllowedOriginPatterns());
         configuration.setAllowedMethods(Arrays.stream(allowedMethods.split(","))
             .map(String::trim)
             .filter(method -> !method.isBlank())
-            .collect(Collectors.toList()));
+            .toList());
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "X-Total-Count"));
         configuration.setAllowCredentials(true);
@@ -42,5 +51,18 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private List<String> buildAllowedOriginPatterns() {
+        Set<String> patterns = new LinkedHashSet<>();
+
+        Arrays.stream(allowedOrigins.split(","))
+            .map(String::trim)
+            .filter(origin -> !origin.isBlank())
+            .forEach(patterns::add);
+
+        patterns.addAll(SAFE_DEFAULT_ORIGIN_PATTERNS);
+
+        return List.copyOf(patterns);
     }
 }
