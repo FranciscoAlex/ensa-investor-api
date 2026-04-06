@@ -1,29 +1,47 @@
 {
-  "updatedAt": "2024-07-11",
+  "updatedAt": "2026-04-06",
   "badgeLabel": "DESTAQUE 2024",
   "subtitle": "Relatório e Contas Consolidado",
   "headline": "Resultados que reflectem a nossa Solidez",
-  "description": "Em 2024, a ENSA alcançou marcos históricos, com um crescimento de 52% no resultado líquido e a consolidação da liderança de mercado.",
+  "description": "Em 2024, a ENSA alcançou marcos históricos, com um crescimento de 12.5% nos prémios brutos emitidos e a consolidação da liderança de mercado.",
   "downloadUrl": "",
   "downloadLabel": "Baixar Relatório Completo (12.4 MB)",
   "statCards": [
     {
-      "id": "roe",
-      "label": "ROE (Rentabilidade do Capital)",
-      "value": "13%",
-      "trend": "+4% vs 2023",
-      "progressValue": 65,
+      "id": "premios-brutos",
+      "label": "Prémios Brutos Emitidos",
+      "value": "473.1B AOA",
+      "trend": "+12.5% vs 2023",
+      "progressValue": 0,
+      "showProgress": false,
+      "note": ""
+    },
+    {
+      "id": "resultado-liquido",
+      "label": "Resultado Líquido",
+      "value": "18.4B AOA",
+      "trend": "+8.2% vs 2023",
+      "progressValue": 0,
+      "showProgress": false,
+      "note": ""
+    },
+    {
+      "id": "quota-mercado",
+      "label": "Quota de Mercado",
+      "value": "37%",
+      "trend": "+2.1% vs 2023",
+      "progressValue": 37,
       "showProgress": true,
       "note": ""
     },
     {
-      "id": "ipo",
-      "label": "Privatização (IPO)",
-      "value": "Listada na BODIVA",
-      "trend": "",
+      "id": "capital-proprio",
+      "label": "Capital Próprio",
+      "value": "98.4B AOA",
+      "trend": "+5.4% vs 2023",
       "progressValue": 0,
       "showProgress": false,
-      "note": "Transparência e Governação de padrão mundial."
+      "note": ""
     }
   ]
 }

@@ -4,6 +4,9 @@
     "updatedAt": "2026-04-04",
     "description": "Organograma ENSA"
   },
+  "settings": {
+    "showHierarchy": true
+  },
   "topNodes": [
     {
       "id": "GAD",

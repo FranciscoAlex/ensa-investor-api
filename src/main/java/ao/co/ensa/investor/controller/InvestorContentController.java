@@ -26,6 +26,20 @@ public class InvestorContentController {
         return ResponseEntity.ok(items != null ? items : List.of());
     }
 
+    @GetMapping("/media-assets/images")
+    @Operation(summary = "List reusable image assets", description = "Lists all uploaded image files available under /uploads for reuse in editors.")
+    public ResponseEntity<List<java.util.Map<String, String>>> listImageAssets() {
+        return ResponseEntity.ok(investorContentService.listImageAssets());
+    }
+
+    @PostMapping(value = "/media-assets/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload reusable image asset", description = "Uploads an image to shared assets and returns its public URL.")
+    public ResponseEntity<java.util.Map<String, String>> uploadSharedImage(@RequestParam("file") MultipartFile file) {
+        String url = investorContentService.uploadSharedImage(file);
+        return ResponseEntity.status(201).body(java.util.Map.of("url", url,
+            "filename", file.getOriginalFilename() != null ? file.getOriginalFilename() : "image"));
+    }
+
     // ---- Historical milestones ----
     @GetMapping("/historical-milestones")
     @Operation(summary = "List historical milestones", description = "Main historical milestones of ENSA")
@@ -52,6 +66,19 @@ public class InvestorContentController {
     @Operation(summary = "Get BODIVA share record by ID")
     public ResponseEntity<BodivaShareHistoryDTO> getBodivaShareHistoryById(@PathVariable Long id) {
         return ResponseEntity.ok(investorContentService.getBodivaShareHistoryById(id));
+    }
+
+    @PostMapping("/bodiva-share-history")
+    @Operation(summary = "Create BODIVA share history record")
+    public ResponseEntity<BodivaShareHistoryDTO> createBodivaShareHistory(@RequestBody BodivaShareHistoryDTO dto) {
+        return ResponseEntity.status(201).body(investorContentService.createBodivaShareHistory(dto));
+    }
+
+    @DeleteMapping("/bodiva-share-history/{id}")
+    @Operation(summary = "Delete BODIVA share history record")
+    public ResponseEntity<Void> deleteBodivaShareHistory(@PathVariable Long id) {
+        investorContentService.deleteBodivaShareHistory(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ---- Board of Directors ----
@@ -446,9 +473,22 @@ public class InvestorContentController {
         return ResponseEntity.ok(investorContentService.saveAnnualReportDestaque(dto));
     }
 
+    // ---- Investor FAQ ----
+    @GetMapping("/investor-faq")
+    @Operation(summary = "Get Investor FAQ", description = "Returns the FAQ items for the investor support page from investor_faq.json.")
+    public ResponseEntity<InvestorFaqDTO> getInvestorFaq() {
+        return ResponseEntity.ok(investorContentService.getInvestorFaq());
+    }
+
+    @PutMapping("/investor-faq")
+    @Operation(summary = "Update Investor FAQ", description = "Saves FAQ items to investor_faq.json and evicts cache.")
+    public ResponseEntity<InvestorFaqDTO> updateInvestorFaq(@RequestBody InvestorFaqDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveInvestorFaq(dto));
+    }
+
     // ---- Órgãos Sociais Members ----
     @GetMapping("/organ-members")
-    @Operation(summary = "Get Órgãos Sociais members", description = "Returns members for each social organ (except Conselho de Administração) loaded from organ_members.json.")
+    @Operation(summary = "Get Órgãos Sociais members", description = "Returns members for each social organ loaded from organ_members.json.")
     public ResponseEntity<OrganMembersDTO> getOrganMembers() {
         return ResponseEntity.ok(investorContentService.getOrganMembers());
     }
@@ -518,6 +558,19 @@ public class InvestorContentController {
     @Operation(summary = "Update financial indicators page content", description = "Updates editable page content for route /ensa/indicadores-financeiros.")
     public ResponseEntity<FinancialIndicatorsPageDTO> updateFinancialIndicatorsPage(@RequestBody FinancialIndicatorsPageDTO dto) {
         return ResponseEntity.ok(investorContentService.saveFinancialIndicatorsPage(dto));
+    }
+
+    // ---- Participadas (JSON file-based) ----
+    @GetMapping("/participadas")
+    @Operation(summary = "Get Participadas content", description = "Returns editable page content for route /ensa/participadas.")
+    public ResponseEntity<ParticipadasDataDTO> getParticipadas() {
+        return ResponseEntity.ok(investorContentService.getParticipadas());
+    }
+
+    @PutMapping("/participadas")
+    @Operation(summary = "Update Participadas content", description = "Updates editable page content for route /ensa/participadas.")
+    public ResponseEntity<ParticipadasDataDTO> updateParticipadas(@RequestBody ParticipadasDataDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveParticipadas(dto));
     }
 
     // ---- Calendário de Divulgações (JSON file-based) ----

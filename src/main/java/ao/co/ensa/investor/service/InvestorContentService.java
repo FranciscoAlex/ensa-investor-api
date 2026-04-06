@@ -24,7 +24,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -56,6 +60,8 @@ public class InvestorContentService {
 
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
+
+    private static final List<String> IMAGE_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg");
 
     private <T> T readJson(String filename, Class<T> type) {
         ObjectMapper mapper = new ObjectMapper();
@@ -104,6 +110,56 @@ public class InvestorContentService {
         }
     }
 
+    public List<Map<String, String>> listImageAssets() {
+        try {
+            Path root = Paths.get(uploadDir).toAbsolutePath().normalize();
+            if (!Files.exists(root)) {
+                return List.of();
+            }
+
+            List<Map<String, String>> assets = new ArrayList<>();
+            try (var stream = Files.walk(root)) {
+                stream.filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        String filename = path.getFileName().toString();
+                        String lower = filename.toLowerCase(Locale.ROOT);
+                        boolean isImage = IMAGE_EXTENSIONS.stream().anyMatch(lower::endsWith);
+                        if (!isImage) {
+                            return;
+                        }
+
+                        Path relative = root.relativize(path);
+                        String relativeUrl = relative.toString().replace('\\', '/');
+                        String url = baseUrl + "/uploads/" + relativeUrl;
+
+                        assets.add(Map.of(
+                            "name", filename,
+                            "url", url,
+                            "path", relativeUrl
+                        ));
+                    });
+            }
+
+            assets.sort(Comparator.comparing((Map<String, String> item) -> item.getOrDefault("path", "")).reversed());
+            return assets;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to list image assets", e);
+        }
+    }
+
+    public String uploadSharedImage(MultipartFile file) {
+        try {
+            String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
+            String filename = UUID.randomUUID() + "_" + original;
+            Path uploadPath = Paths.get(uploadDir, "shared-images");
+            Files.createDirectories(uploadPath);
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            return baseUrl + "/uploads/shared-images/" + filename;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload shared image", e);
+        }
+    }
+
     // ---- Historical milestones ----
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'historicalMilestones'")
@@ -136,6 +192,28 @@ public class InvestorContentService {
         return bodivaShareHistoryRepository.findById(id)
             .map(this::toBodivaDTO)
             .orElseThrow(() -> new ResourceNotFoundException("BodivaShareHistory", "id", id));
+    }
+
+    @Transactional
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public BodivaShareHistoryDTO createBodivaShareHistory(BodivaShareHistoryDTO dto) {
+        BodivaShareHistory entity = BodivaShareHistory.builder()
+            .recordDate(dto.getRecordDate())
+            .sharePrice(dto.getSharePrice())
+            .volume(dto.getVolume())
+            .openingPrice(dto.getOpeningPrice())
+            .closingPrice(dto.getClosingPrice())
+            .highPrice(dto.getHighPrice())
+            .lowPrice(dto.getLowPrice())
+            .notes(dto.getNotes())
+            .build();
+        return toBodivaDTO(bodivaShareHistoryRepository.save(entity));
+    }
+
+    @Transactional
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public void deleteBodivaShareHistory(Long id) {
+        bodivaShareHistoryRepository.deleteById(id);
     }
 
     // ---- Board members ----
@@ -818,6 +896,24 @@ public class InvestorContentService {
         }
     }
 
+    // ---- Investor FAQ (JSON file-based) ----
+
+    @Cacheable(value = "investorContent", key = "'investorFaq'")
+    public InvestorFaqDTO getInvestorFaq() {
+        return readJson("investor_faq.json", InvestorFaqDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'investorFaq'")
+    public InvestorFaqDTO saveInvestorFaq(InvestorFaqDTO dto) {
+        try {
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("investor_faq.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save investor_faq.json", e);
+        }
+    }
+
     // ---- Órgãos Sociais Members (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'organMembers'")
@@ -843,6 +939,7 @@ public class InvestorContentService {
         return readJson("carousel_slides.json", CarouselSlidesDTO.class);
     }
 
+    @CacheEvict(value = "investorContent", key = "'carouselSlides'")
     public String uploadCarouselSlideImage(String slideId, MultipartFile file) {
         try {
             String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
@@ -850,7 +947,18 @@ public class InvestorContentService {
             Path uploadPath = Paths.get(uploadDir, "carousel-slides", slideId);
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
-            return baseUrl + "/uploads/carousel-slides/" + slideId + "/" + filename;
+            String url = baseUrl + "/uploads/carousel-slides/" + slideId + "/" + filename;
+
+            CarouselSlidesDTO current = getCarouselSlides();
+            if (current.getSlides() != null) {
+                current.getSlides().stream()
+                        .filter(slide -> slideId.equals(slide.getId()))
+                        .findFirst()
+                        .ifPresent(slide -> slide.setImageUrl(url));
+            }
+            saveCarouselSlides(current);
+
+            return url;
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload carousel slide image", e);
         }
@@ -884,6 +992,24 @@ public class InvestorContentService {
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save who_we_are.json", e);
+        }
+    }
+
+    // ---- Participadas (JSON file-based) ----
+
+    @Cacheable(value = "investorContent", key = "'participadas'")
+    public ParticipadasDataDTO getParticipadas() {
+        return readJson("participadas.json", ParticipadasDataDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'participadas'")
+    public ParticipadasDataDTO saveParticipadas(ParticipadasDataDTO dto) {
+        try {
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("participadas.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save participadas.json", e);
         }
     }
 

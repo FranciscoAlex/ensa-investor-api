@@ -35,5 +35,6 @@ public class OrganMembersDTO {
         private String name;
         private String role;
         private String photoUrl;
+        private String bio;
     }
 }

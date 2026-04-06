@@ -1,0 +1,53 @@
+{
+  "updatedAt": "2026-04-06",
+  "participadas": [
+    {
+      "id": "e1bb1b2e-741a-42c2-bdf4-f8de4279ab4e",
+      "name": "Africa-Re, African Reinsurance Corporation",
+      "percentage": 1.05,
+      "displayOrder": 1
+    },
+    {
+      "id": "ab6f2bb6-1f7c-47fc-8f7a-8f810b10636f",
+      "name": "Clínica Sagrada Esperança Luanda - Marginal, LDA",
+      "percentage": 30.00,
+      "displayOrder": 2
+    },
+    {
+      "id": "c1f72ef1-5a04-4b5b-a81d-e087c55452eb",
+      "name": "Access Bank Angola, S.A",
+      "percentage": 12.14,
+      "displayOrder": 3
+    },
+    {
+      "id": "fd9e44ff-de86-4299-8cf9-c3d3902341fe",
+      "name": "Banco Postal S.A",
+      "percentage": 3.86,
+      "displayOrder": 4
+    },
+    {
+      "id": "dd6ac2f5-b383-4a11-bba6-02e0b5774a3f",
+      "name": "Editora e Livraria Chá de Caxinde, S.A",
+      "percentage": 24.94,
+      "displayOrder": 5
+    },
+    {
+      "id": "aa159238-d62f-41cc-bfa3-ddff2103f568",
+      "name": "Fecope - Sociedade Angolana de Comercio Internacional, LDA.",
+      "percentage": 10.00,
+      "displayOrder": 6
+    },
+    {
+      "id": "8a0bcbd0-c1da-45ae-bba5-bbd48ed3d1b3",
+      "name": "SADI - Sociedade Angolana de Desenvolvimento Imobiliário, S.A",
+      "percentage": 5.00,
+      "displayOrder": 7
+    },
+    {
+      "id": "3be5b078-43bb-40cf-aacf-db82db45bbec",
+      "name": "Regenera - Activos Imobiliários (SU), LDA",
+      "percentage": 100.00,
+      "displayOrder": 8
+    }
+  ]
+}

@@ -13,6 +13,21 @@
       ]
     },
     {
+      "id": "conselho-administracao",
+      "title": "Conselho de Administração",
+      "description": "Órgão responsável pela definição da estratégia e supervisão da gestão da Sociedade, garantindo a criação de valor sustentável.",
+      "color": "#164993",
+      "members": [
+        { "name": "Eng. Mário Mota Lemos", "role": "Presidente do Conselho de Administração", "photoUrl": "" },
+        { "name": "Dra. Matilde Guebe", "role": "Administradora Executiva", "photoUrl": "" },
+        { "name": "Dra. Amália Quintão Barbosa", "role": "Administradora Executiva", "photoUrl": "" },
+        { "name": "Dr. Ildo do Nascimento", "role": "Administrador Executivo", "photoUrl": "" },
+        { "name": "Dr. Silvano Pinto Adriano", "role": "Administrador Executivo", "photoUrl": "" },
+        { "name": "Administrador Não Executivo", "role": "Administrador Não Executivo", "photoUrl": "" },
+        { "name": "Administrador Não Executivo", "role": "Administrador Não Executivo", "photoUrl": "" }
+      ]
+    },
+    {
       "id": "comissao-executiva",
       "title": "Comissão Executiva",
       "description": "Órgão que assegura a gestão corrente da ENSA, implementando o plano estratégico aprovado pelo Conselho de Administração.",

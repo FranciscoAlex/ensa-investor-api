@@ -8,21 +8,23 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      - ORACLE_HOST=oracle-xe
-      - ORACLE_PORT=1521
-      - ORACLE_SID=XEPDB1
-      - ORACLE_USERNAME=ensa_dev
-      - ORACLE_PASSWORD=ensa_dev_password
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=ensa_investor
+      - MYSQL_USER=ensa_dev
+      - MYSQL_PASSWORD=ensa_dev_password
+      - MYSQL_USE_SSL=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - FLYWAY_ENABLED=true
       - JWT_SECRET=ensa-investor-super-secret-key-change-in-production-min-256-bits-required
       - AES_SECRET_KEY=0123456789abcdef0123456789abcdef
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
       - APP_FRONTEND_URL=http://localhost:3000
     depends_on:
-      oracle-init:
-        condition: service_completed_successfully
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_started
       mailhog:
@@ -30,36 +32,27 @@ services:
     networks:
       - ensa-network
 
-  oracle-init:
-    image: gvenzl/oracle-xe:21-slim
-    container_name: oracle-init
-    volumes:
-      - ./init-oracle:/init
-    entrypoint: ["/bin/sh", "/init/run.sh"]
-    depends_on:
-      oracle-xe:
-        condition: service_healthy
-    networks:
-      - ensa-network
-    restart: "no"
-
-  oracle-xe:
-    image: gvenzl/oracle-xe:21-slim
-    container_name: oracle-xe
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
     ports:
-      - "1521:1521"
+      - "3306:3306"
     environment:
-      - ORACLE_PASSWORD=ensa_dev_password
+      - MYSQL_ROOT_PASSWORD=ensa_dev_password
+      - MYSQL_DATABASE=ensa_investor
+      - MYSQL_USER=ensa_dev
+      - MYSQL_PASSWORD=ensa_dev_password
+      - TZ=Africa/Luanda
     volumes:
-      - oracle-data:/opt/oracle/oradata
+      - mysql-data:/var/lib/mysql
     networks:
       - ensa-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pensa_dev_password"]
       interval: 10s
-      timeout: 10s
-      retries: 18
-      start_period: 120s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   redis:
     image: redis:7.2-alpine
@@ -85,5 +78,5 @@ networks:
     driver: bridge
 
 volumes:
-  oracle-data:
+  mysql-data:
   redis-data:

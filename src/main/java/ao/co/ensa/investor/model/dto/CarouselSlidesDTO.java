@@ -25,6 +25,10 @@ public class CarouselSlidesDTO {
         private String title;
         private String subtitle;
         private String imageUrl;
+        private String overlayStartColor;
+        private String overlayEndColor;
+        private Integer overlayStartOpacity;
+        private Integer overlayEndOpacity;
         private Integer order;
         private Boolean active;
     }

@@ -11,6 +11,7 @@ import java.util.List;
 public class OrganigramDTO {
 
     private MetaDTO meta;
+    private SettingsDTO settings;
     private List<TopNodeDTO> topNodes;
     private List<DirectorDTO> directors;
 
@@ -28,10 +29,19 @@ public class OrganigramDTO {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class SettingsDTO {
+        private Boolean showHierarchy;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class TopNodeDTO {
         private String id;
         private String label;
         private String type;
+        private Boolean isVisible;
         private String bgColor;
         private String textColor;
         private String parentId;
@@ -51,6 +61,7 @@ public class OrganigramDTO {
         private String photoUrl;
         private String bio;
         private Boolean isCEO;
+        private Boolean isVisible;
         private String cardBgColor;
         private String cardTextColor;
         private Integer displayOrder;
@@ -64,6 +75,8 @@ public class OrganigramDTO {
     public static class DepartmentDTO {
         private String id;
         private String label;
+        private List<String> titles;
+        private String titlesBgColor;
         private String bgColor;
         private String textColor;
     }
