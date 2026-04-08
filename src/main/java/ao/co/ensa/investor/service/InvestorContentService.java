@@ -318,6 +318,43 @@ public class InvestorContentService {
             .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
     }
 
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public HistoricalMilestoneDTO createHistoricalMilestone(HistoricalMilestoneDTO dto) {
+        HistoricalMilestone e = HistoricalMilestone.builder()
+            .title(dto.getTitle())
+            .description(dto.getDescription() != null ? dto.getDescription() : "")
+            .milestoneYear(dto.getMilestoneYear() != null ? dto.getMilestoneYear() : java.time.Year.now().getValue())
+            .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
+            .imageUrl(dto.getImageUrl() != null ? dto.getImageUrl() : "")
+            .contentHtml(dto.getContentHtml() != null ? dto.getContentHtml() : "")
+            .eventTitle(dto.getEventTitle() != null ? dto.getEventTitle() : "")
+            .active(true)
+            .build();
+        return toMilestoneDTO(historicalMilestoneRepository.save(e));
+    }
+
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public HistoricalMilestoneDTO updateHistoricalMilestone(Long id, HistoricalMilestoneDTO dto) {
+        HistoricalMilestone e = historicalMilestoneRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
+        if (dto.getTitle() != null) e.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) e.setDescription(dto.getDescription());
+        if (dto.getMilestoneYear() != null) e.setMilestoneYear(dto.getMilestoneYear());
+        if (dto.getDisplayOrder() != null) e.setDisplayOrder(dto.getDisplayOrder());
+        if (dto.getImageUrl() != null) e.setImageUrl(dto.getImageUrl());
+        if (dto.getContentHtml() != null) e.setContentHtml(dto.getContentHtml());
+        if (dto.getEventTitle() != null) e.setEventTitle(dto.getEventTitle());
+        return toMilestoneDTO(historicalMilestoneRepository.save(e));
+    }
+
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public void deleteHistoricalMilestone(Long id) {
+        HistoricalMilestone e = historicalMilestoneRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
+        e.setActive(false);
+        historicalMilestoneRepository.save(e);
+    }
+
     // ---- Board members ----
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'boardMembers'")

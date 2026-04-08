@@ -79,6 +79,25 @@ public class InvestorContentController {
         return ResponseEntity.ok(investorContentService.getHistoricalMilestoneById(id));
     }
 
+    @PostMapping("/historical-milestones")
+    @Operation(summary = "Create historical milestone")
+    public ResponseEntity<HistoricalMilestoneDTO> createHistoricalMilestone(@RequestBody HistoricalMilestoneDTO dto) {
+        return ResponseEntity.status(201).body(investorContentService.createHistoricalMilestone(dto));
+    }
+
+    @PutMapping("/historical-milestones/{id}")
+    @Operation(summary = "Update historical milestone")
+    public ResponseEntity<HistoricalMilestoneDTO> updateHistoricalMilestone(@PathVariable Long id, @RequestBody HistoricalMilestoneDTO dto) {
+        return ResponseEntity.ok(investorContentService.updateHistoricalMilestone(id, dto));
+    }
+
+    @DeleteMapping("/historical-milestones/{id}")
+    @Operation(summary = "Soft-delete historical milestone")
+    public ResponseEntity<Void> deleteHistoricalMilestone(@PathVariable Long id) {
+        investorContentService.deleteHistoricalMilestone(id);
+        return ResponseEntity.noContent().build();
+    }
+
     // ---- Board of Directors ----
     @GetMapping("/board-members")
     @Operation(summary = "List board members", description = "Board of Directors (CA) with description, organogram and CV links")
