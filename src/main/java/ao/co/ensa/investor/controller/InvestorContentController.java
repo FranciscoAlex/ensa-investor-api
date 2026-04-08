@@ -596,6 +596,31 @@ public class InvestorContentController {
         return ResponseEntity.ok(investorContentService.saveLegislacaoPage(dto));
     }
 
+    // ---- Governance Políticas / Legislação (new CT item-based format) ----
+    @GetMapping("/governance/politicas")
+    @Operation(summary = "Get Políticas governance items", description = "Returns CT-managed policy/FATCA blocks for route /politicas.")
+    public ResponseEntity<GovernancePoliticasDTO> getGovernancePoliticas() {
+        return ResponseEntity.ok(investorContentService.getGovernancePoliticas());
+    }
+
+    @PutMapping("/governance/politicas")
+    @Operation(summary = "Update Políticas governance items", description = "Saves CT-managed policy/FATCA blocks for route /politicas.")
+    public ResponseEntity<GovernancePoliticasDTO> updateGovernancePoliticas(@RequestBody GovernancePoliticasDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveGovernancePoliticas(dto));
+    }
+
+    @GetMapping("/governance/legislacao")
+    @Operation(summary = "Get Legislação governance items", description = "Returns CT-managed legislation diplomas for route /legislacao.")
+    public ResponseEntity<GovernanceLegislacaoDTO> getGovernanceLegislacao() {
+        return ResponseEntity.ok(investorContentService.getGovernanceLegislacao());
+    }
+
+    @PutMapping("/governance/legislacao")
+    @Operation(summary = "Update Legislação governance items", description = "Saves CT-managed legislation diplomas for route /legislacao.")
+    public ResponseEntity<GovernanceLegislacaoDTO> updateGovernanceLegislacao(@RequestBody GovernanceLegislacaoDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveGovernanceLegislacao(dto));
+    }
+
     // ---- Calendário de Divulgações (JSON file-based) ----
     @GetMapping("/calendario-divulgacoes")
     @Operation(summary = "Get disclosure calendar", description = "Returns all card groups and their items for /ensa/calendario-divulgacoes.")

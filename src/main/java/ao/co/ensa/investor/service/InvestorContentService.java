@@ -1151,6 +1151,42 @@ public class InvestorContentService {
         }
     }
 
+    // ---- Governance Políticas (new CT format) ----
+
+    @Cacheable(value = "investorContent", key = "'governancePoliticas'")
+    public GovernancePoliticasDTO getGovernancePoliticas() {
+        return readJson("governance_politicas.json", GovernancePoliticasDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'governancePoliticas'")
+    public GovernancePoliticasDTO saveGovernancePoliticas(GovernancePoliticasDTO dto) {
+        try {
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("governance_politicas.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save governance_politicas.json", e);
+        }
+    }
+
+    // ---- Governance Legislação (new CT format) ----
+
+    @Cacheable(value = "investorContent", key = "'governanceLegislacao'")
+    public GovernanceLegislacaoDTO getGovernanceLegislacao() {
+        return readJson("governance_legislacao.json", GovernanceLegislacaoDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'governanceLegislacao'")
+    public GovernanceLegislacaoDTO saveGovernanceLegislacao(GovernanceLegislacaoDTO dto) {
+        try {
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("governance_legislacao.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save governance_legislacao.json", e);
+        }
+    }
+
     @Cacheable(value = "investorContent", key = "'financialIndicatorsPage'")
     public FinancialIndicatorsPageDTO getFinancialIndicatorsPage() {
         return readJson("financial_indicators.json", FinancialIndicatorsPageDTO.class);

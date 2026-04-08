@@ -14,4 +14,8 @@ public class WhoWeAreContentDTO {
     private String title;
     private String mainText;
     private String updatedAt;
+    private String statsAnosHistoria;
+    private String statsMarketShare;
+    private String statsColaboradores;
+    private String statsTopSeguradoras;
 }
