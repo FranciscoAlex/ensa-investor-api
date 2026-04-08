@@ -1,0 +1,33 @@
+{
+  "updatedAt": "2025-01-01",
+  "slides": [
+    {
+      "id": "sobre-slide-1",
+      "title": "A Nossa História",
+      "subtitle": "Mais de meio século a proteger o que é mais importante para os angolanos.",
+      "imageUrl": "",
+      "overlayStartColor": "#0b3a82",
+      "overlayEndColor": "#0b3a82",
+      "overlayStartOpacity": 40,
+      "overlayEndOpacity": 80,
+      "buttonText": "",
+      "buttonLink": "",
+      "order": 0,
+      "active": true
+    },
+    {
+      "id": "sobre-slide-2",
+      "title": "Missão e Valores",
+      "subtitle": "Solidez, compromisso e liderança ao serviço dos nossos parceiros e accionistas.",
+      "imageUrl": "",
+      "overlayStartColor": "#0b3a82",
+      "overlayEndColor": "#081f4d",
+      "overlayStartOpacity": 45,
+      "overlayEndOpacity": 85,
+      "buttonText": "",
+      "buttonLink": "",
+      "order": 1,
+      "active": true
+    }
+  ]
+}

@@ -519,6 +519,41 @@ public class InvestorContentController {
         return ResponseEntity.ok(java.util.Map.of("url", url));
     }
 
+    // ---- Sobre Nós Carousel Slides ----
+    @GetMapping("/sobre-nos-carousel-slides")
+    @Operation(summary = "Get Sobre Nós carousel slides", description = "Returns the Sobre Nós page hero carousel slides from sobre_nos_carousel_slides.json.")
+    public ResponseEntity<CarouselSlidesDTO> getSobreNosCarouselSlides() {
+        return ResponseEntity.ok(investorContentService.getSobreNosCarouselSlides());
+    }
+
+    @PutMapping("/sobre-nos-carousel-slides")
+    @Operation(summary = "Update Sobre Nós carousel slides", description = "Saves Sobre Nós carousel slides to sobre_nos_carousel_slides.json and evicts cache.")
+    public ResponseEntity<CarouselSlidesDTO> updateSobreNosCarouselSlides(@RequestBody CarouselSlidesDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveSobreNosCarouselSlides(dto));
+    }
+
+    @PostMapping(value = "/sobre-nos-carousel-slides/upload/{slideId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload Sobre Nós carousel slide image", description = "Uploads an image for the given Sobre Nós slide ID, returns the hosted URL.")
+    public ResponseEntity<java.util.Map<String, String>> uploadSobreNosCarouselSlideImage(
+            @PathVariable String slideId,
+            @RequestParam("file") MultipartFile file) {
+        String url = investorContentService.uploadSobreNosCarouselSlideImage(slideId, file);
+        return ResponseEntity.ok(java.util.Map.of("url", url));
+    }
+
+    // ---- Card Visuals ----
+    @GetMapping("/card-visuals")
+    @Operation(summary = "Get card visuals config", description = "Returns the colour/blur configuration for the 4 home metric cards.")
+    public ResponseEntity<CardVisualsDTO> getCardVisuals() {
+        return ResponseEntity.ok(investorContentService.getCardVisuals());
+    }
+
+    @PutMapping("/card-visuals")
+    @Operation(summary = "Update card visuals config", description = "Saves card visuals config and evicts cache.")
+    public ResponseEntity<CardVisualsDTO> updateCardVisuals(@RequestBody CardVisualsDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveCardVisuals(dto));
+    }
+
     // ---- Plano Estratégico ----
     @GetMapping("/plano-estrategico")
     @Operation(summary = "Get Plano Estratégico content", description = "Returns editable content for route /ensa/plano-estrategico.")

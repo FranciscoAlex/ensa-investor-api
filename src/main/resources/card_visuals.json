@@ -1,0 +1,49 @@
+{
+  "updatedAt": "2025-01-01",
+  "cards": [
+    {
+      "key": "preco-accao",
+      "label": "Preço da Acção (Live)",
+      "bgColor": "rgba(255,255,255,0.65)",
+      "backdropBlur": "16px",
+      "accentColor": "#0b3a82",
+      "iconBgColor": "rgba(11,58,130,0.10)",
+      "borderColor": "rgba(0,0,0,0.04)",
+      "valueTextColor": "#1e293b",
+      "labelTextColor": "#64748b"
+    },
+    {
+      "key": "variacao-dia",
+      "label": "Variação do Dia (%)",
+      "bgColor": "rgba(255,255,255,0.65)",
+      "backdropBlur": "16px",
+      "accentColor": "#0b3a82",
+      "iconBgColor": "rgba(11,58,130,0.10)",
+      "borderColor": "rgba(0,0,0,0.04)",
+      "valueTextColor": "#1e293b",
+      "labelTextColor": "#64748b"
+    },
+    {
+      "key": "valorizacao-ipo",
+      "label": "Valorização desde o IPO",
+      "bgColor": "rgba(255,255,255,0.65)",
+      "backdropBlur": "16px",
+      "accentColor": "#0b3a82",
+      "iconBgColor": "rgba(11,58,130,0.10)",
+      "borderColor": "rgba(0,0,0,0.04)",
+      "valueTextColor": "#1e293b",
+      "labelTextColor": "#64748b"
+    },
+    {
+      "key": "capitalizacao-bolsista",
+      "label": "Capitalização Bolsista(kzs)",
+      "bgColor": "rgba(255,255,255,0.65)",
+      "backdropBlur": "16px",
+      "accentColor": "#0b3a82",
+      "iconBgColor": "rgba(11,58,130,0.10)",
+      "borderColor": "rgba(0,0,0,0.04)",
+      "valueTextColor": "#1e293b",
+      "labelTextColor": "#64748b"
+    }
+  ]
+}

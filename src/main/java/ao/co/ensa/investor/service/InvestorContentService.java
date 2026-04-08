@@ -1077,6 +1077,67 @@ public class InvestorContentService {
         }
     }
 
+    // ---- Sobre Nós Carousel Slides (JSON file-based) ----
+
+    @Cacheable(value = "investorContent", key = "'sobreNosCarouselSlides'")
+    public CarouselSlidesDTO getSobreNosCarouselSlides() {
+        return readJson("sobre_nos_carousel_slides.json", CarouselSlidesDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'sobreNosCarouselSlides'")
+    public String uploadSobreNosCarouselSlideImage(String slideId, MultipartFile file) {
+        try {
+            String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
+            String filename = UUID.randomUUID() + "_" + original;
+            Path uploadPath = Paths.get(uploadDir, "sobre-nos-carousel-slides", slideId);
+            Files.createDirectories(uploadPath);
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            String url = baseUrl + "/uploads/sobre-nos-carousel-slides/" + slideId + "/" + filename;
+
+            CarouselSlidesDTO current = getSobreNosCarouselSlides();
+            if (current.getSlides() != null) {
+                current.getSlides().stream()
+                        .filter(slide -> slideId.equals(slide.getId()))
+                        .findFirst()
+                        .ifPresent(slide -> slide.setImageUrl(url));
+            }
+            saveSobreNosCarouselSlides(current);
+
+            return url;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload sobre-nos carousel slide image", e);
+        }
+    }
+
+    @CacheEvict(value = "investorContent", key = "'sobreNosCarouselSlides'")
+    public CarouselSlidesDTO saveSobreNosCarouselSlides(CarouselSlidesDTO dto) {
+        try {
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("sobre_nos_carousel_slides.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save sobre_nos_carousel_slides.json", e);
+        }
+    }
+
+    // ---- Card Visuals (JSON file-based) ----
+
+    @Cacheable(value = "investorContent", key = "'cardVisuals'")
+    public CardVisualsDTO getCardVisuals() {
+        return readJson("card_visuals.json", CardVisualsDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'cardVisuals'")
+    public CardVisualsDTO saveCardVisuals(CardVisualsDTO dto) {
+        try {
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("card_visuals.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save card_visuals.json", e);
+        }
+    }
+
     // ---- Who We Are (JSON file-based) ----
 
     @Cacheable(value = "investorContent", key = "'aboutWhoWeAre'")
