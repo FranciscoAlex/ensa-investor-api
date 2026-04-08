@@ -1,0 +1,14 @@
+{
+  "route": "/legislacao",
+  "title": "Legislação Complementar",
+  "introText": "Diplomas legais relevantes para o contexto regulatório e de reporte fiscal de informações financeiras.",
+  "updatedAt": "2026-04-08",
+  "sections": [
+    {
+      "id": "leg-1",
+      "title": "Diplomas de Referência",
+      "content": "Decreto Legislativo Presidencial n.º 1/17; Decreto Presidencial n.º 33/20; Despacho n.º 1169/20."
+    }
+  ],
+  "documents": []
+}

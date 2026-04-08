@@ -22,7 +22,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;import java.time.LocalDate;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -61,6 +61,19 @@ public class InvestorContentService {
     private String baseUrl;
 
     private static final List<String> IMAGE_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg");
+    private static final List<String> DOCUMENT_EXTENSIONS = List.of(".pdf", ".doc", ".docx");
+    private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final long MAX_DOCUMENT_SIZE_BYTES = 10L * 1024 * 1024;
+
+    private static String safeExtension(String filename) {
+        String lower = filename.toLowerCase(Locale.ROOT);
+        int idx = lower.lastIndexOf('.');
+        return idx >= 0 ? lower.substring(idx) : "";
+    }
+
+    private static String normalizeFilename(String original) {
+        return original.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
 
     private <T> T readJson(String filename, Class<T> type) {
         ObjectMapper mapper = new ObjectMapper();
@@ -130,16 +143,30 @@ public class InvestorContentService {
                         Path relative = root.relativize(path);
                         String relativeUrl = relative.toString().replace('\\', '/');
                         String url = baseUrl + "/uploads/" + relativeUrl;
+                        String extension = safeExtension(filename);
+                        long sizeBytes;
+                        String insertedAt;
+
+                        try {
+                            sizeBytes = Files.size(path);
+                            insertedAt = Files.getLastModifiedTime(path).toInstant().toString();
+                        } catch (Exception ex) {
+                            sizeBytes = 0;
+                            insertedAt = "";
+                        }
 
                         assets.add(Map.of(
                             "name", filename,
                             "url", url,
-                            "path", relativeUrl
+                            "path", relativeUrl,
+                            "extension", extension,
+                            "sizeBytes", Long.toString(sizeBytes),
+                            "insertedAt", insertedAt
                         ));
                     });
             }
 
-            assets.sort(Comparator.comparing((Map<String, String> item) -> item.getOrDefault("path", "")).reversed());
+            assets.sort(Comparator.comparing((Map<String, String> item) -> item.getOrDefault("insertedAt", "")).reversed());
             return assets;
         } catch (IOException e) {
             throw new RuntimeException("Failed to list image assets", e);
@@ -148,14 +175,130 @@ public class InvestorContentService {
 
     public String uploadSharedImage(MultipartFile file) {
         try {
+            if (file.isEmpty()) {
+                throw new RuntimeException("Image file is empty");
+            }
             String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
-            String filename = UUID.randomUUID() + "_" + original;
+            String extension = safeExtension(original);
+            if (!IMAGE_EXTENSIONS.contains(extension)) {
+                throw new RuntimeException("Invalid image format. Allowed: jpg, jpeg, png, webp, gif, bmp, svg");
+            }
+            if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
+                throw new RuntimeException("Image is too large. Max size is 5MB");
+            }
+
+            String filename = UUID.randomUUID() + "_" + normalizeFilename(original);
             Path uploadPath = Paths.get(uploadDir, "shared-images");
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/shared-images/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload shared image", e);
+        }
+    }
+
+    public List<Map<String, String>> listFileAssets() {
+        try {
+            Path root = Paths.get(uploadDir).toAbsolutePath().normalize();
+            if (!Files.exists(root)) {
+                return List.of();
+            }
+
+            List<Map<String, String>> assets = new ArrayList<>();
+            try (var stream = Files.walk(root)) {
+                stream.filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        try {
+                            String filename = path.getFileName().toString();
+                            String extension = safeExtension(filename);
+                            boolean isDocument = DOCUMENT_EXTENSIONS.contains(extension);
+                            if (!isDocument) {
+                                return;
+                            }
+
+                            Path relative = root.relativize(path);
+                            String relativeUrl = relative.toString().replace('\\', '/');
+                            String url = baseUrl + "/uploads/" + relativeUrl;
+                            long sizeBytes = Files.size(path);
+                            String insertedAt = Files.getLastModifiedTime(path).toInstant().toString();
+
+                            assets.add(Map.of(
+                                "name", filename,
+                                "url", url,
+                                "path", relativeUrl,
+                                "extension", extension,
+                                "sizeBytes", Long.toString(sizeBytes),
+                                "insertedAt", insertedAt
+                            ));
+                        } catch (Exception ignored) {
+                        }
+                    });
+            }
+
+            assets.sort(Comparator.comparing((Map<String, String> item) -> item.getOrDefault("insertedAt", "")).reversed());
+            return assets;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to list file assets", e);
+        }
+    }
+
+    public String uploadSharedFile(MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                throw new RuntimeException("File is empty");
+            }
+
+            String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "document";
+            String extension = safeExtension(original);
+            if (!DOCUMENT_EXTENSIONS.contains(extension)) {
+                throw new RuntimeException("Invalid document format. Allowed: pdf, doc, docx");
+            }
+            if (file.getSize() > MAX_DOCUMENT_SIZE_BYTES) {
+                throw new RuntimeException("File is too large. Max size is 10MB");
+            }
+
+            String filename = UUID.randomUUID() + "_" + normalizeFilename(original);
+            Path uploadPath = Paths.get(uploadDir, "shared-files");
+            Files.createDirectories(uploadPath);
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            return baseUrl + "/uploads/shared-files/" + filename;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload shared file", e);
+        }
+    }
+
+    public void deleteSharedImage(String relativePath) {
+        deleteSharedAsset(relativePath, IMAGE_EXTENSIONS, "image");
+    }
+
+    public void deleteSharedFile(String relativePath) {
+        deleteSharedAsset(relativePath, DOCUMENT_EXTENSIONS, "file");
+    }
+
+    private void deleteSharedAsset(String relativePath, List<String> allowedExtensions, String assetType) {
+        try {
+            if (relativePath == null || relativePath.trim().isEmpty()) {
+                throw new RuntimeException("Missing asset path");
+            }
+
+            Path root = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path target = root.resolve(relativePath).normalize();
+
+            // Prevent path traversal outside uploads root
+            if (!target.startsWith(root)) {
+                throw new RuntimeException("Invalid asset path");
+            }
+
+            String extension = safeExtension(target.getFileName().toString());
+            if (!allowedExtensions.contains(extension)) {
+                throw new RuntimeException("Invalid " + assetType + " format");
+            }
+
+            if (Files.exists(target)) {
+                Files.delete(target);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete shared " + assetType, e);
         }
     }
 
@@ -969,6 +1112,42 @@ public class InvestorContentService {
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Failed to save participadas.json", e);
+        }
+    }
+
+    // ---- Políticas / Legislação (JSON file-based) ----
+
+    @Cacheable(value = "investorContent", key = "'politicasPage'")
+    public PolicyLegislationPageDTO getPoliticasPage() {
+        return readJson("politicas_page.json", PolicyLegislationPageDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'politicasPage'")
+    public PolicyLegislationPageDTO savePoliticasPage(PolicyLegislationPageDTO dto) {
+        try {
+            dto.setRoute("/politicas");
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("politicas_page.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save politicas_page.json", e);
+        }
+    }
+
+    @Cacheable(value = "investorContent", key = "'legislacaoPage'")
+    public PolicyLegislationPageDTO getLegislacaoPage() {
+        return readJson("legislacao_page.json", PolicyLegislationPageDTO.class);
+    }
+
+    @CacheEvict(value = "investorContent", key = "'legislacaoPage'")
+    public PolicyLegislationPageDTO saveLegislacaoPage(PolicyLegislationPageDTO dto) {
+        try {
+            dto.setRoute("/legislacao");
+            dto.setUpdatedAt(java.time.LocalDate.now().toString());
+            writeJson("legislacao_page.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save legislacao_page.json", e);
         }
     }
 

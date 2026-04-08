@@ -1,0 +1,24 @@
+{
+  "route": "/politicas",
+  "title": "Políticas e Regulamentos",
+  "introText": "Informação institucional sobre políticas internas e enquadramento FATCA.",
+  "updatedAt": "2026-04-08",
+  "sections": [
+    {
+      "id": "fatca-1",
+      "title": "1. O QUE É O FATCA?",
+      "content": "O FATCA estabelece obrigações de identificação e reporte de contas de Pessoas dos EUA, nos termos da legislação aplicável em Angola."
+    },
+    {
+      "id": "fatca-2",
+      "title": "2. QUEM É CONSIDERADO PESSOA DOS EUA?",
+      "content": "Inclui cidadãos dos EUA, titulares de Green Card e entidades com beneficiários efectivos enquadráveis."
+    },
+    {
+      "id": "fatca-3",
+      "title": "3. QUAL O IMPACTO NOS CLIENTES ENSA?",
+      "content": "A ENSA mantém procedimentos de qualificação e reporte para os casos obrigatórios por lei."
+    }
+  ],
+  "documents": []
+}

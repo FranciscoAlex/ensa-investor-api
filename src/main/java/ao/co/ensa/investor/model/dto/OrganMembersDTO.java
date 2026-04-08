@@ -24,6 +24,7 @@ public class OrganMembersDTO {
         private String title;
         private String description;
         private String color;
+        private String textColor;
         private List<OrganMemberDTO> members;
     }
 
@@ -36,5 +37,7 @@ public class OrganMembersDTO {
         private String role;
         private String photoUrl;
         private String bio;
+        private Boolean showBio;
+        private java.util.List<String> otherTitles;
     }
 }

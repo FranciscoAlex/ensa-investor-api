@@ -38,6 +38,34 @@ public class InvestorContentController {
             "filename", file.getOriginalFilename() != null ? file.getOriginalFilename() : "image"));
     }
 
+    @DeleteMapping("/media-assets/images")
+    @Operation(summary = "Delete reusable image asset", description = "Deletes a shared image by relative path.")
+    public ResponseEntity<Void> deleteSharedImage(@RequestParam("path") String path) {
+        investorContentService.deleteSharedImage(path);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/media-assets/files")
+    @Operation(summary = "List reusable file assets", description = "Lists all uploaded document files (pdf/doc/docx) available under /uploads for reuse in editors.")
+    public ResponseEntity<List<java.util.Map<String, String>>> listFileAssets() {
+        return ResponseEntity.ok(investorContentService.listFileAssets());
+    }
+
+    @PostMapping(value = "/media-assets/files/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload reusable file asset", description = "Uploads a document to shared assets and returns its public URL.")
+    public ResponseEntity<java.util.Map<String, String>> uploadSharedFile(@RequestParam("file") MultipartFile file) {
+        String url = investorContentService.uploadSharedFile(file);
+        return ResponseEntity.status(201).body(java.util.Map.of("url", url,
+            "filename", file.getOriginalFilename() != null ? file.getOriginalFilename() : "file"));
+    }
+
+    @DeleteMapping("/media-assets/files")
+    @Operation(summary = "Delete reusable file asset", description = "Deletes a shared document by relative path.")
+    public ResponseEntity<Void> deleteSharedFile(@RequestParam("path") String path) {
+        investorContentService.deleteSharedFile(path);
+        return ResponseEntity.noContent().build();
+    }
+
     // ---- Historical milestones ----
     @GetMapping("/historical-milestones")
     @Operation(summary = "List historical milestones", description = "Main historical milestones of ENSA")
@@ -541,6 +569,31 @@ public class InvestorContentController {
     @Operation(summary = "Update Participadas content", description = "Updates editable page content for route /ensa/participadas.")
     public ResponseEntity<ParticipadasDataDTO> updateParticipadas(@RequestBody ParticipadasDataDTO dto) {
         return ResponseEntity.ok(investorContentService.saveParticipadas(dto));
+    }
+
+    // ---- Políticas / Legislação (JSON file-based) ----
+    @GetMapping("/politicas-page")
+    @Operation(summary = "Get Políticas page content", description = "Returns editable page content for route /politicas.")
+    public ResponseEntity<PolicyLegislationPageDTO> getPoliticasPage() {
+        return ResponseEntity.ok(investorContentService.getPoliticasPage());
+    }
+
+    @PutMapping("/politicas-page")
+    @Operation(summary = "Update Políticas page content", description = "Updates editable page content for route /politicas.")
+    public ResponseEntity<PolicyLegislationPageDTO> updatePoliticasPage(@RequestBody PolicyLegislationPageDTO dto) {
+        return ResponseEntity.ok(investorContentService.savePoliticasPage(dto));
+    }
+
+    @GetMapping("/legislacao-page")
+    @Operation(summary = "Get Legislação page content", description = "Returns editable page content for route /legislacao.")
+    public ResponseEntity<PolicyLegislationPageDTO> getLegislacaoPage() {
+        return ResponseEntity.ok(investorContentService.getLegislacaoPage());
+    }
+
+    @PutMapping("/legislacao-page")
+    @Operation(summary = "Update Legislação page content", description = "Updates editable page content for route /legislacao.")
+    public ResponseEntity<PolicyLegislationPageDTO> updateLegislacaoPage(@RequestBody PolicyLegislationPageDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveLegislacaoPage(dto));
     }
 
     // ---- Calendário de Divulgações (JSON file-based) ----
