@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/static-data/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/investor-content/cache/evict").hasRole("ADMIN")
                 .requestMatchers("/api/v1/investor-content/**").permitAll()
+                .requestMatchers("/api/v1/market/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

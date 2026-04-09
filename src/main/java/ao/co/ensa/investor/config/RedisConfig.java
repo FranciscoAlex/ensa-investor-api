@@ -151,12 +151,14 @@ public class RedisConfig {
         RedisCacheConfiguration staticDataCacheConfig = cacheConfig.entryTtl(Duration.ofHours(24));
         RedisCacheConfiguration investorContentCacheConfig = cacheConfig.entryTtl(Duration.ofHours(24));
         RedisCacheConfiguration userSessionsCacheConfig = cacheConfig.entryTtl(Duration.ofMinutes(30));
+        RedisCacheConfiguration bodivaMarketCacheConfig = cacheConfig.entryTtl(Duration.ofMinutes(10));
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(cacheConfig)
             .withCacheConfiguration("staticData", staticDataCacheConfig)
             .withCacheConfiguration("investorContent", investorContentCacheConfig)
             .withCacheConfiguration("userSessions", userSessionsCacheConfig)
+            .withCacheConfiguration("bodivaMarket", bodivaMarketCacheConfig)
             .build();
     }
 
