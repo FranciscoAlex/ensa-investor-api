@@ -391,6 +391,13 @@ public class InvestorContentController {
         return okList(investorContentService.getShareholderStructure());
     }
 
+    @PutMapping("/shareholder-structure/{id}")
+    @Operation(summary = "Update shareholder structure entry")
+    public ResponseEntity<ShareholderStructureDTO> updateShareholderStructure(
+            @PathVariable Long id, @RequestBody ShareholderStructureDTO dto) {
+        return ResponseEntity.ok(investorContentService.updateShareholderStructure(id, dto));
+    }
+
     // ---- Investor Relations ----
     @GetMapping("/investor-relations")
     @Operation(summary = "List investor relations contacts", description = "Investor Relations contact data")

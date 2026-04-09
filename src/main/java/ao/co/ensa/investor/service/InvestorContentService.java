@@ -905,6 +905,18 @@ public class InvestorContentService {
             .stream().map(this::toShareholderStructureDTO).collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public ShareholderStructureDTO updateShareholderStructure(Long id, ShareholderStructureDTO dto) {
+        ShareholderStructure e = shareholderStructureRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ShareholderStructure", "id", id));
+        if (dto.getShareholderName() != null) e.setShareholderName(dto.getShareholderName());
+        if (dto.getSharesLabel() != null) e.setSharesLabel(dto.getSharesLabel());
+        if (dto.getPercentage() != null) e.setPercentage(dto.getPercentage());
+        if (dto.getDisplayColor() != null) e.setDisplayColor(dto.getDisplayColor());
+        if (dto.getDisplayOrder() != null) e.setDisplayOrder(dto.getDisplayOrder());
+        return toShareholderStructureDTO(shareholderStructureRepository.save(e));
+    }
+
     // ---- Investor Relations ----
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'investorRelations'")
