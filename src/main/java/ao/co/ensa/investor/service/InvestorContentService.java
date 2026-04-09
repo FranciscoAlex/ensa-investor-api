@@ -66,13 +66,18 @@ public class InvestorContentService {
     private static final long MAX_DOCUMENT_SIZE_BYTES = 10L * 1024 * 1024;
 
     private static String safeExtension(String filename) {
-        String lower = filename.toLowerCase(Locale.ROOT);
-        int idx = lower.lastIndexOf('.');
-        return idx >= 0 ? lower.substring(idx) : "";
+        int idx = filename.lastIndexOf('.');
+        return idx >= 0 ? filename.substring(idx).toLowerCase(Locale.ROOT) : "";
+    }
+
+    private static String getBasename(String filename) {
+        int idx = filename.lastIndexOf('.');
+        return idx >= 0 ? filename.substring(0, idx) : filename;
     }
 
     private static String normalizeFilename(String original) {
-        return original.replaceAll("[^a-zA-Z0-9._-]", "_");
+        return original.replaceAll("[^a-zA-Z0-9._-]", "_")
+            .replaceAll("_{2,}", "_");
     }
 
     private <T> T readJson(String filename, Class<T> type) {
@@ -187,7 +192,10 @@ public class InvestorContentService {
                 throw new RuntimeException("Image is too large. Max size is 5MB");
             }
 
-            String filename = UUID.randomUUID() + "_" + normalizeFilename(original);
+            String basename = normalizeFilename(getBasename(original));
+            String shortCode = UUID.randomUUID().toString().substring(0, 8);
+            String filename = basename + "_" + shortCode + extension;
+
             Path uploadPath = Paths.get(uploadDir, "shared-images");
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
@@ -257,7 +265,10 @@ public class InvestorContentService {
                 throw new RuntimeException("File is too large. Max size is 10MB");
             }
 
-            String filename = UUID.randomUUID() + "_" + normalizeFilename(original);
+            String basename = normalizeFilename(getBasename(original));
+            String shortCode = UUID.randomUUID().toString().substring(0, 8);
+            String filename = basename + "_" + shortCode + extension;
+
             Path uploadPath = Paths.get(uploadDir, "shared-files");
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);

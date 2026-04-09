@@ -25,8 +25,7 @@ public class GovernancePoliticasDTO {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PolicyItemDTO {
         private String id;
-        private String question;
-        private String answer;
+        private String label;
         private Integer sortOrder;
         private String fileUrl;
         private String fileName;
