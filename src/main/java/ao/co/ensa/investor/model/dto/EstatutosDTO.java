@@ -17,6 +17,8 @@ public class EstatutosDTO {
     private String lastUpdateLabel;
     private String legalBase;
     private String updatedAt;
+    private String documentUrl;
+    private String documentLabel;
     private List<EstatutosSectionDTO> sections;
 
     @Data
@@ -28,16 +30,5 @@ public class EstatutosDTO {
         private String id;
         private String title;
         private String content;
-        /** Downloadable files attached to this section */
-        private List<SectionFileDTO> files;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SectionFileDTO {
-        private String label;
-        private String url;
     }
 }

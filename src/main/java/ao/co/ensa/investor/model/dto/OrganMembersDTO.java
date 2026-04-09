@@ -1,5 +1,6 @@
 package ao.co.ensa.investor.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,6 +33,7 @@ public class OrganMembersDTO {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public static class OrganMemberDTO {
         private String name;
         private String role;
@@ -39,5 +41,7 @@ public class OrganMembersDTO {
         private String bio;
         private Boolean showBio;
         private java.util.List<String> otherTitles;
+        private String hyperlink;
+        private Boolean active;
     }
 }

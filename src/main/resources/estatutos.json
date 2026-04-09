@@ -2,36 +2,33 @@
   "lastUpdateLabel": "11 de Julho de 2024",
   "legalBase": "Lei das Sociedades Comerciais",
   "updatedAt": "2024-07-11",
+  "documentUrl": "",
+  "documentLabel": "Estatutos Sociais da ENSA",
   "sections": [
     {
       "id": "natureza",
       "title": "Natureza e Firma",
-      "content": "A ENSA – Seguros de Angola, S.A. é uma sociedade anónima de capitais públicos, dotada de personalidade jurídica e autonomia administrativa, financeira e patrimonial. Rege-se pelos presentes Estatutos, pela Lei das Sociedades Comerciais e demais legislação aplicável às empresas públicas e ao sector segurador.",
-      "files": []
+      "content": "A ENSA – Seguros de Angola, S.A. é uma sociedade anónima de capitais públicos, dotada de personalidade jurídica e autonomia administrativa, financeira e patrimonial. Rege-se pelos presentes Estatutos, pela Lei das Sociedades Comerciais e demais legislação aplicável às empresas públicas e ao sector segurador."
     },
     {
       "id": "objecto",
       "title": "Objecto Social",
-      "content": "O objecto social principal da Sociedade consiste no exercício da actividade seguradora e resseguradora nos ramos \"Vida\" e \"Não Vida\", incluindo a gestão de fundos de pensões e outras actividades complementares ou acessórias permitidas por lei.",
-      "files": []
+      "content": "O objecto social principal da Sociedade consiste no exercício da actividade seguradora e resseguradora nos ramos \"Vida\" e \"Não Vida\", incluindo a gestão de fundos de pensões e outras actividades complementares ou acessórias permitidas por lei."
     },
     {
       "id": "capital",
       "title": "Capital Social e Acções",
-      "content": "O capital social é de 12.000.000.000 Kz (doze mil milhões de Kwanzas), integralmente subscrito e realizado. Este capital encontra-se representado por 2.400.000 acções nominativas, com o valor nominal de 5.000 Kz cada. A Sociedade pode, mediante deliberação da Assembleia Geral, aumentar o seu capital social.",
-      "files": []
+      "content": "O capital social é de 12.000.000.000 Kz (doze mil milhões de Kwanzas), integralmente subscrito e realizado. Este capital encontra-se representado por 2.400.000 acções nominativas, com o valor nominal de 5.000 Kz cada. A Sociedade pode, mediante deliberação da Assembleia Geral, aumentar o seu capital social."
     },
     {
       "id": "orgaos",
       "title": "Governança e Órgãos",
-      "content": "A estrutura de governação da ENSA compreende a Mesa da Assembleia Geral, o Conselho de Administração (composto por membros executivos e não-executivos), a Comissão Executiva (responsável pela gestão corrente) e o Conselho Fiscal. As competências de cada órgão estão estritamente definidas para garantir transparência e rigor.",
-      "files": []
+      "content": "A estrutura de governação da ENSA compreende a Mesa da Assembleia Geral, o Conselho de Administração (composto por membros executivos e não-executivos), a Comissão Executiva (responsável pela gestão corrente) e o Conselho Fiscal. As competências de cada órgão estão estritamente definidas para garantir transparência e rigor."
     },
     {
       "id": "sede",
       "title": "Sede e Duração",
-      "content": "A ENSA tem a sua sede em Luanda, nas Loanda Towers (Rua Gamal Abdel Nasser, Ingombota), podendo estabelecer sucursais, delegações ou outras formas de representação em qualquer ponto do território nacional ou no estrangeiro. A sua duração é por tempo indeterminado.",
-      "files": []
+      "content": "A ENSA tem a sua sede em Luanda, nas Loanda Towers (Rua Gamal Abdel Nasser, Ingombota), podendo estabelecer sucursais, delegações ou outras formas de representação em qualquer ponto do território nacional ou no estrangeiro. A sua duração é por tempo indeterminado."
     }
   ]
 }
