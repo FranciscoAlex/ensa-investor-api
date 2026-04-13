@@ -87,9 +87,9 @@ app:
     refresh-expiration-ms: 604800000  # 7 days
     issuer: ensa-investor-api
 
-  # Upload storage
+  # Upload storage (Control Tower uploads)
   upload:
-    dir: ${UPLOAD_DIR:./uploads}
+    dir: ${UPLOAD_DIR:/u02/uploads}
 
   # AES Encryption
   encryption:
@@ -105,7 +105,7 @@ app:
 
   # CORS
   cors:
-    allowed-origins: ${CORS_ORIGINS:https://investorensa.up.railway.app,https://investidor.ensa.co.ao,https://www.ensa.co.ao,https://*.railway.app,http://localhost:3000,http://localhost:4173,http://localhost:4200}
+    allowed-origins: ${CORS_ORIGINS:https://portaldoaccionista.ensa.co.ao,https://www.portaldoaccionista.ensa.co.ao,https://investorensa.up.railway.app,https://investidor.ensa.co.ao,https://www.ensa.co.ao,https://*.railway.app,http://localhost:3000,http://localhost:3001,http://localhost:4173,http://localhost:4200,https://105.174.38.174}
     allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
     allowed-headers: "*"
     max-age: 3600

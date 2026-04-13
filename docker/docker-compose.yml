@@ -6,6 +6,8 @@ services:
     container_name: ensa-api
     ports:
       - "8080:8080"
+    volumes:
+      - /u02/uploads:/u02/uploads
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - MYSQL_HOST=mysql
@@ -22,6 +24,7 @@ services:
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
       - APP_FRONTEND_URL=http://localhost:3000
+      - UPLOAD_DIR=/u02/uploads
     depends_on:
       mysql:
         condition: service_healthy

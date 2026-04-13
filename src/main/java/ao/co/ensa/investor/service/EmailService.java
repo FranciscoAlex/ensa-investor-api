@@ -21,7 +21,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    @Value("${spring.mail.username:noreply@ensa.ao}")
+    @Value("${spring.mail.username:no_reply@ensa.co.ao}")
     private String fromEmail;
 
     @Value("${app.frontend-url:http://localhost:3000}")
