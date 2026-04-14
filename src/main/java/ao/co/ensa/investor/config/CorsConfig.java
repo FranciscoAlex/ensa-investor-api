@@ -38,11 +38,8 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(buildAllowedOriginPatterns());
-        configuration.setAllowedMethods(Arrays.stream(allowedMethods.split(","))
-            .map(String::trim)
-            .filter(method -> !method.isBlank())
-            .toList());
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "X-Total-Count"));
         configuration.setAllowCredentials(true);
