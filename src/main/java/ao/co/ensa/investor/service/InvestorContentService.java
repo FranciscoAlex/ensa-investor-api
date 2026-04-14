@@ -62,8 +62,8 @@ public class InvestorContentService {
 
     private static final List<String> IMAGE_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg");
     private static final List<String> DOCUMENT_EXTENSIONS = List.of(".pdf", ".doc", ".docx");
-    private static final long MAX_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
-    private static final long MAX_DOCUMENT_SIZE_BYTES = 10L * 1024 * 1024;
+    private static final long MAX_IMAGE_SIZE_BYTES = 55L * 1024 * 1024;   // 55 MB
+    private static final long MAX_DOCUMENT_SIZE_BYTES = 60L * 1024 * 1024; // 60 MB
 
     private static String safeExtension(String filename) {
         int idx = filename.lastIndexOf('.');
@@ -189,12 +189,10 @@ public class InvestorContentService {
                 throw new RuntimeException("Invalid image format. Allowed: jpg, jpeg, png, webp, gif, bmp, svg");
             }
             if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-                throw new RuntimeException("Image is too large. Max size is 5MB");
+                throw new RuntimeException("Image is too large. Max size is 55MB");
             }
 
-            String basename = normalizeFilename(getBasename(original));
-            String shortCode = UUID.randomUUID().toString().substring(0, 8);
-            String filename = basename + "_" + shortCode + extension;
+            String filename = normalizeFilename(original);
 
             Path uploadPath = Paths.get(uploadDir, "shared-images");
             Files.createDirectories(uploadPath);
@@ -262,12 +260,10 @@ public class InvestorContentService {
                 throw new RuntimeException("Invalid document format. Allowed: pdf, doc, docx");
             }
             if (file.getSize() > MAX_DOCUMENT_SIZE_BYTES) {
-                throw new RuntimeException("File is too large. Max size is 10MB");
+                throw new RuntimeException("File is too large. Max size is 60MB");
             }
 
-            String basename = normalizeFilename(getBasename(original));
-            String shortCode = UUID.randomUUID().toString().substring(0, 8);
-            String filename = basename + "_" + shortCode + extension;
+            String filename = normalizeFilename(original);
 
             Path uploadPath = Paths.get(uploadDir, "shared-files");
             Files.createDirectories(uploadPath);
@@ -418,7 +414,7 @@ public class InvestorContentService {
     public BoardMemberDTO uploadBoardMemberFile(Long id, MultipartFile file, String field) {
         try {
             String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "file";
-            String filename = UUID.randomUUID() + "_" + original;
+            String filename = original.replaceAll("[^a-zA-Z0-9._-]", "_");
             Path uploadPath = Paths.get(uploadDir, "board-members", String.valueOf(id));
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
@@ -482,7 +478,7 @@ public class InvestorContentService {
         try {
             Path uploadPath = Paths.get(uploadDir, "corporate-governance-reports", String.valueOf(id));
             Files.createDirectories(uploadPath);
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
+            String filename = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/corporate-governance-reports/" + id + "/" + filename;
         } catch (IOException e) {
@@ -544,7 +540,7 @@ public class InvestorContentService {
         try {
             Path uploadPath = Paths.get(uploadDir, "financial-statements", String.valueOf(id));
             Files.createDirectories(uploadPath);
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
+            String filename = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/financial-statements/" + id + "/" + filename;
         } catch (IOException e) {
@@ -886,7 +882,7 @@ public class InvestorContentService {
         try {
             Path uploadPath = Paths.get(uploadDir, "assemblies", String.valueOf(assemblyId));
             Files.createDirectories(uploadPath);
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename()
+            String filename = file.getOriginalFilename()
                 .replaceAll("[^a-zA-Z0-9._-]", "_");
             Path dest = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
@@ -900,7 +896,7 @@ public class InvestorContentService {
         try {
             Path uploadPath = Paths.get(uploadDir, "communications", String.valueOf(commId));
             Files.createDirectories(uploadPath);
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename()
+            String filename = file.getOriginalFilename()
                 .replaceAll("[^a-zA-Z0-9._-]", "_");
             Path dest = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
@@ -1105,7 +1101,7 @@ public class InvestorContentService {
     public String uploadCarouselSlideImage(String slideId, MultipartFile file) {
         try {
             String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
-            String filename = UUID.randomUUID() + "_" + original;
+            String filename = original.replaceAll("[^a-zA-Z0-9._-]", "_");
             Path uploadPath = Paths.get(uploadDir, "carousel-slides", slideId);
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
@@ -1148,7 +1144,7 @@ public class InvestorContentService {
     public String uploadSobreNosCarouselSlideImage(String slideId, MultipartFile file) {
         try {
             String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image";
-            String filename = UUID.randomUUID() + "_" + original;
+            String filename = original.replaceAll("[^a-zA-Z0-9._-]", "_");
             Path uploadPath = Paths.get(uploadDir, "sobre-nos-carousel-slides", slideId);
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
@@ -1348,7 +1344,7 @@ public class InvestorContentService {
     public String uploadCeoPhoto(MultipartFile file) {
         try {
             String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "photo";
-            String filename = UUID.randomUUID() + "_" + original;
+            String filename = original.replaceAll("[^a-zA-Z0-9._-]", "_");
             Path uploadPath = Paths.get(uploadDir, "ceo-message");
             Files.createDirectories(uploadPath);
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
