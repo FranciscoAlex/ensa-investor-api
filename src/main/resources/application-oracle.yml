@@ -19,6 +19,7 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
         boot:
           allow_jdbc_metadata_access: false
 
@@ -34,3 +35,12 @@ logging:
     ao.co.ensa.investor: INFO
     com.zaxxer.hikari: WARN
     oracle.jdbc: WARN
+
+# Railway MySQL fallback (used when Oracle is unreachable)
+app:
+  datasource:
+    fallback:
+      url: jdbc:mysql://centerbeam.proxy.rlwy.net:29369/railway?useSSL=true&allowPublicKeyRetrieval=true&serverTimezone=Africa/Luanda
+      username: root
+      password: lPvIOGIwhGvNZsULQRYcSICmzgpYBaFo
+      driver-class-name: com.mysql.cj.jdbc.Driver

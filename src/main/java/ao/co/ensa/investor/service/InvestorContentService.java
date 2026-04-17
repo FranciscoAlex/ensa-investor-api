@@ -62,8 +62,8 @@ public class InvestorContentService {
 
     private static final List<String> IMAGE_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg");
     private static final List<String> DOCUMENT_EXTENSIONS = List.of(".pdf", ".doc", ".docx");
-    private static final long MAX_IMAGE_SIZE_BYTES = 55L * 1024 * 1024;   // 55 MB
-    private static final long MAX_DOCUMENT_SIZE_BYTES = 60L * 1024 * 1024; // 60 MB
+    private static final long MAX_IMAGE_SIZE_BYTES = 120L * 1024 * 1024;   // 120 MB
+    private static final long MAX_DOCUMENT_SIZE_BYTES = 120L * 1024 * 1024; // 120 MB
 
     private static String safeExtension(String filename) {
         int idx = filename.lastIndexOf('.');
@@ -189,7 +189,7 @@ public class InvestorContentService {
                 throw new RuntimeException("Invalid image format. Allowed: jpg, jpeg, png, webp, gif, bmp, svg");
             }
             if (file.getSize() > MAX_IMAGE_SIZE_BYTES) {
-                throw new RuntimeException("Image is too large. Max size is 55MB");
+                throw new RuntimeException("Image is too large. Max size is 120MB");
             }
 
             String filename = normalizeFilename(original);
@@ -260,7 +260,7 @@ public class InvestorContentService {
                 throw new RuntimeException("Invalid document format. Allowed: pdf, doc, docx");
             }
             if (file.getSize() > MAX_DOCUMENT_SIZE_BYTES) {
-                throw new RuntimeException("File is too large. Max size is 60MB");
+                throw new RuntimeException("File is too large. Max size is 120MB");
             }
 
             String filename = normalizeFilename(original);

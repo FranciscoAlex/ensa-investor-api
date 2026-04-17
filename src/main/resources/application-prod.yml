@@ -21,6 +21,7 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         boot:
           allow_jdbc_metadata_access: false
 
