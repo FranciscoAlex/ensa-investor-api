@@ -185,8 +185,9 @@ public class InvestorContentController {
     @Operation(summary = "List financial statements", description = "Reports and accounts (e.g. last 10 years)")
     public ResponseEntity<List<FinancialStatementDTO>> getFinancialStatements(
             @RequestParam(required = false) Integer fromYear,
-            @RequestParam(required = false) Integer toYear) {
-        return okList(investorContentService.getFinancialStatements(fromYear, toYear));
+            @RequestParam(required = false) Integer toYear,
+            @RequestParam(required = false) String type) {
+        return okList(investorContentService.getFinancialStatements(fromYear, toYear, type));
     }
 
     @GetMapping("/financial-statements/{id}")
@@ -617,6 +618,19 @@ public class InvestorContentController {
     @Operation(summary = "Update financial indicators page content", description = "Updates editable page content for route /ensa/indicadores-financeiros.")
     public ResponseEntity<FinancialIndicatorsPageDTO> updateFinancialIndicatorsPage(@RequestBody FinancialIndicatorsPageDTO dto) {
         return ResponseEntity.ok(investorContentService.saveFinancialIndicatorsPage(dto));
+    }
+
+    // ---- Financial Dashboard (/dashboard-financeiro) ----
+    @GetMapping("/financial-dashboard")
+    @Operation(summary = "Get financial dashboard content", description = "Returns editable content for route /dashboard-financeiro.")
+    public ResponseEntity<FinancialDashboardDTO> getFinancialDashboard() {
+        return ResponseEntity.ok(investorContentService.getFinancialDashboard());
+    }
+
+    @PutMapping("/financial-dashboard")
+    @Operation(summary = "Update financial dashboard content", description = "Updates editable content for route /dashboard-financeiro.")
+    public ResponseEntity<FinancialDashboardDTO> updateFinancialDashboard(@RequestBody FinancialDashboardDTO dto) {
+        return ResponseEntity.ok(investorContentService.saveFinancialDashboard(dto));
     }
 
     // ---- Participadas (JSON file-based) ----

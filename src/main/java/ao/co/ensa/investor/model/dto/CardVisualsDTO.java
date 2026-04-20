@@ -14,6 +14,7 @@ import java.util.List;
 public class CardVisualsDTO {
 
     private String updatedAt;
+    private boolean showMarketTicker;
     private List<CardVisualDTO> cards;
 
     @Data

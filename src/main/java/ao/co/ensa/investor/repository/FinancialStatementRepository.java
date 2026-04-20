@@ -9,4 +9,6 @@ public interface FinancialStatementRepository extends JpaRepository<FinancialSta
 
     List<FinancialStatement> findAllByOrderByYearDesc();
     List<FinancialStatement> findByYearBetweenOrderByYearDesc(int fromYear, int toYear);
+    List<FinancialStatement> findByStatementTypeOrderByYearDesc(String statementType);
+    List<FinancialStatement> findByStatementTypeAndYearBetweenOrderByYearDesc(String statementType, int fromYear, int toYear);
 }

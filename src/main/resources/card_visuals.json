@@ -1,5 +1,6 @@
 {
   "updatedAt": "2025-01-01",
+  "showMarketTicker": true,
   "cards": [
     {
       "key": "preco-accao",

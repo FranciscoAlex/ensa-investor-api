@@ -488,11 +488,20 @@ public class InvestorContentService {
 
     // ---- Financial statements ----
     @Transactional(readOnly = true)
-    @Cacheable(value = "investorContent", key = "'financialStatements:' + (#fromYear != null ? #fromYear : 'all') + ':' + (#toYear != null ? #toYear : 'all')")
-    public List<FinancialStatementDTO> getFinancialStatements(Integer fromYear, Integer toYear) {
-        List<FinancialStatement> list = (fromYear != null && toYear != null)
-            ? financialStatementRepository.findByYearBetweenOrderByYearDesc(fromYear, toYear)
-            : financialStatementRepository.findAllByOrderByYearDesc();
+    @Cacheable(value = "investorContent", key = "'financialStatements:' + (#fromYear != null ? #fromYear : 'all') + ':' + (#toYear != null ? #toYear : 'all') + ':' + (#type != null ? #type : 'all')")
+    public List<FinancialStatementDTO> getFinancialStatements(Integer fromYear, Integer toYear, String type) {
+        List<FinancialStatement> list;
+        
+        if (type != null && !type.isBlank()) {
+            list = (fromYear != null && toYear != null)
+                ? financialStatementRepository.findByStatementTypeAndYearBetweenOrderByYearDesc(type, fromYear, toYear)
+                : financialStatementRepository.findByStatementTypeOrderByYearDesc(type);
+        } else {
+            list = (fromYear != null && toYear != null)
+                ? financialStatementRepository.findByYearBetweenOrderByYearDesc(fromYear, toYear)
+                : financialStatementRepository.findAllByOrderByYearDesc();
+        }
+        
         return list.stream().map(this::toFinancialStatementDTO).collect(Collectors.toList());
     }
 
@@ -1322,7 +1331,50 @@ public class InvestorContentService {
         }
     }
 
-    // ---- CEO Message (JSON file-based) ----
+    // ---- Financial Dashboard (/dashboard-financeiro) ----
+
+    @Cacheable(value = "investorContent", key = "'financialDashboard'")
+    public FinancialDashboardDTO getFinancialDashboard() {
+        FinancialDashboardDTO dto = readJson("financial_dashboard.json", FinancialDashboardDTO.class);
+        if (dto == null) {
+            dto = FinancialDashboardDTO.builder()
+                .headerTitle("Performance Financeira Interactiva")
+                .headerDescription("Acompanhe semanalmente a evolução dos principais indicadores de performance (KPIs) e rácios estratégicos da ENSA Seguros.")
+                .powerBiUrl("https://app.powerbi.com/view?r=eyJrIjoiODZkZTcyYm")
+                .kpis(java.util.List.of(
+                    FinancialDashboardDTO.KpiCardDTO.builder().label("Prémios Brutos Emitidos").value("473,1 mM").suffix("AOA").growth("+12.5%").isNegativeGood(false).color("#164993").build(),
+                    FinancialDashboardDTO.KpiCardDTO.builder().label("Lucro Líquido do Exercício").value("18,4 mM").suffix("AOA").growth("+8.2%").isNegativeGood(false).color("#10b981").build(),
+                    FinancialDashboardDTO.KpiCardDTO.builder().label("Rácio Combinado").value("94.2%").suffix("").growth("-2.1%").isNegativeGood(true).color("#e63c2e").build(),
+                    FinancialDashboardDTO.KpiCardDTO.builder().label("Rácio de Solvência").value("185%").suffix("").growth("+5.4%").isNegativeGood(false).color("#6366f1").build()
+                ))
+                .chartData(java.util.List.of(
+                    FinancialDashboardDTO.ChartRowDTO.builder().year("2019").premiums(210.0).claims(145.0).profit(12.0).build(),
+                    FinancialDashboardDTO.ChartRowDTO.builder().year("2020").premiums(245.0).claims(160.0).profit(14.0).build(),
+                    FinancialDashboardDTO.ChartRowDTO.builder().year("2021").premiums(278.0).claims(185.0).profit(15.0).build(),
+                    FinancialDashboardDTO.ChartRowDTO.builder().year("2022").premiums(312.0).claims(198.0).profit(17.0).build(),
+                    FinancialDashboardDTO.ChartRowDTO.builder().year("2023").premiums(379.0).claims(235.0).profit(18.0).build(),
+                    FinancialDashboardDTO.ChartRowDTO.builder().year("2024").premiums(473.0).claims(282.0).profit(21.0).build()
+                ))
+                .segments(java.util.List.of(
+                    FinancialDashboardDTO.SegmentDTO.builder().name("Não-Vida").value(72.0).color("#164993").build(),
+                    FinancialDashboardDTO.SegmentDTO.builder().name("Vida").value(28.0).color("#e63c2e").build()
+                ))
+                .marketShareNote("Liderança consolidada com 37% de quota de mercado GERAL em Angola.")
+                .build();
+        }
+        return dto;
+    }
+
+    @CacheEvict(value = "investorContent", key = "'financialDashboard'")
+    public FinancialDashboardDTO saveFinancialDashboard(FinancialDashboardDTO dto) {
+        try {
+            writeJson("financial_dashboard.json", dto);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save financial_dashboard.json", e);
+        }
+    }
+
 
     @Cacheable(value = "investorContent", key = "'ceoMessage'")
     public CeoMessageDTO getCeoMessage() {
