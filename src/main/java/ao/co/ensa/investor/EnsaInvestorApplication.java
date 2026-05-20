@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * ENSA Investor Portal — Main Application Entry Point
@@ -14,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableCaching
 @EnableAsync
+@EnableScheduling
 public class EnsaInvestorApplication {
 
     public static void main(String[] args) {

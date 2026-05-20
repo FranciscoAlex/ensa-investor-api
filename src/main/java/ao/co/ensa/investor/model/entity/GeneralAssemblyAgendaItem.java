@@ -21,7 +21,7 @@ public class GeneralAssemblyAgendaItem {
     @JoinColumn(name = "assembly_id", nullable = false)
     private GeneralAssembly assembly;
 
-    @Column(name = "item_text", nullable = false, columnDefinition = "CLOB")
+    @Column(name = "item_text", nullable = false, columnDefinition = "LONGTEXT")
     private String itemText;
 
     @Column(name = "display_order")

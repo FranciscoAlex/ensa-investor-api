@@ -33,7 +33,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Investor relations static content. All reads are cached in Redis (cache name: "investorContent", TTL: 24h).
+ * Investor relations static content. All reads are cached in Redis (cache name:
+ * "investorContent", TTL: 24h).
  */
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,7 @@ public class InvestorContentService {
     private final ShareholderStructureRepository shareholderStructureRepository;
     private final InvestorRelationsRepository investorRelationsRepository;
     private final ExternalAuditorRepository externalAuditorRepository;
+    private final InvestorDocumentRepository investorDocumentRepository;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -60,9 +62,10 @@ public class InvestorContentService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
-    private static final List<String> IMAGE_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg");
+    private static final List<String> IMAGE_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp",
+            ".svg");
     private static final List<String> DOCUMENT_EXTENSIONS = List.of(".pdf", ".doc", ".docx");
-    private static final long MAX_IMAGE_SIZE_BYTES = 120L * 1024 * 1024;   // 120 MB
+    private static final long MAX_IMAGE_SIZE_BYTES = 120L * 1024 * 1024; // 120 MB
     private static final long MAX_DOCUMENT_SIZE_BYTES = 120L * 1024 * 1024; // 120 MB
 
     private static String safeExtension(String filename) {
@@ -77,38 +80,46 @@ public class InvestorContentService {
 
     private static String normalizeFilename(String original) {
         return original.replaceAll("[^a-zA-Z0-9._-]", "_")
-            .replaceAll("_{2,}", "_");
+                .replaceAll("_{2,}", "_");
     }
 
     private <T> T readJson(String filename, Class<T> type) {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         // 1. Try DB first
-        return contentBlockRepository.findByBlockKey(filename)
-            .map(block -> {
+        java.util.Optional<ContentBlock> blockOpt = contentBlockRepository.findByBlockKey(filename);
+        if (blockOpt.isPresent()) {
+            String data = blockOpt.get().getData();
+            if (data != null && !data.isBlank()) {
                 try {
-                    return mapper.readValue(block.getData(), type);
+                    return mapper.readValue(data, type);
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to parse content block: " + filename, e);
+                    // DB content is corrupt/stale — fall through to classpath
+                    System.err.println("[WARN] Failed to parse DB content for " + filename + ": " + e.getMessage()
+                            + " — falling back to classpath");
                 }
-            })
-            .orElseGet(() -> {
-                // 2. Not in DB yet — load from classpath and persist (auto-seed)
-                try {
-                    ClassPathResource resource = new ClassPathResource(filename);
-                    try (InputStream is = resource.getInputStream()) {
-                        String json = new String(is.readAllBytes());
-                        T dto = mapper.readValue(json, type);
-                        ContentBlock block = new ContentBlock();
-                        block.setBlockKey(filename);
-                        block.setData(json);
-                        block.setUpdatedAt(java.time.LocalDateTime.now());
-                        contentBlockRepository.save(block);
-                        return dto;
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to load " + filename, e);
-                }
-            });
+            }
+        }
+
+        // 2. Load from classpath and persist (auto-seed or repair)
+        try {
+            ClassPathResource resource = new ClassPathResource(filename);
+            try (InputStream is = resource.getInputStream()) {
+                String json = new String(is.readAllBytes());
+                T dto = mapper.readValue(json, type);
+                ContentBlock block = blockOpt.orElseGet(ContentBlock::new);
+                block.setBlockKey(filename);
+                block.setData(json);
+                block.setUpdatedAt(java.time.LocalDateTime.now());
+                contentBlockRepository.save(block);
+                return dto;
+            }
+        } catch (Exception e) {
+            // Classpath file missing — return null, caller handles fallback
+            System.err.println("[WARN] Failed to load classpath resource " + filename + ": " + e.getMessage());
+            return null;
+        }
     }
 
     private void writeJson(String filename, Object dto) {
@@ -117,7 +128,7 @@ public class InvestorContentService {
             mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
             String json = mapper.writeValueAsString(dto);
             ContentBlock block = contentBlockRepository.findByBlockKey(filename)
-                .orElseGet(ContentBlock::new);
+                    .orElseGet(ContentBlock::new);
             block.setBlockKey(filename);
             block.setData(json);
             block.setUpdatedAt(java.time.LocalDateTime.now());
@@ -137,41 +148,41 @@ public class InvestorContentService {
             List<Map<String, String>> assets = new ArrayList<>();
             try (var stream = Files.walk(root)) {
                 stream.filter(Files::isRegularFile)
-                    .forEach(path -> {
-                        String filename = path.getFileName().toString();
-                        String lower = filename.toLowerCase(Locale.ROOT);
-                        boolean isImage = IMAGE_EXTENSIONS.stream().anyMatch(lower::endsWith);
-                        if (!isImage) {
-                            return;
-                        }
+                        .forEach(path -> {
+                            String filename = path.getFileName().toString();
+                            String lower = filename.toLowerCase(Locale.ROOT);
+                            boolean isImage = IMAGE_EXTENSIONS.stream().anyMatch(lower::endsWith);
+                            if (!isImage) {
+                                return;
+                            }
 
-                        Path relative = root.relativize(path);
-                        String relativeUrl = relative.toString().replace('\\', '/');
-                        String url = baseUrl + "/uploads/" + relativeUrl;
-                        String extension = safeExtension(filename);
-                        long sizeBytes;
-                        String insertedAt;
+                            Path relative = root.relativize(path);
+                            String relativeUrl = relative.toString().replace('\\', '/');
+                            String url = baseUrl + "/uploads/" + relativeUrl;
+                            String extension = safeExtension(filename);
+                            long sizeBytes;
+                            String insertedAt;
 
-                        try {
-                            sizeBytes = Files.size(path);
-                            insertedAt = Files.getLastModifiedTime(path).toInstant().toString();
-                        } catch (Exception ex) {
-                            sizeBytes = 0;
-                            insertedAt = "";
-                        }
+                            try {
+                                sizeBytes = Files.size(path);
+                                insertedAt = Files.getLastModifiedTime(path).toInstant().toString();
+                            } catch (Exception ex) {
+                                sizeBytes = 0;
+                                insertedAt = "";
+                            }
 
-                        assets.add(Map.of(
-                            "name", filename,
-                            "url", url,
-                            "path", relativeUrl,
-                            "extension", extension,
-                            "sizeBytes", Long.toString(sizeBytes),
-                            "insertedAt", insertedAt
-                        ));
-                    });
+                            assets.add(Map.of(
+                                    "name", filename,
+                                    "url", url,
+                                    "path", relativeUrl,
+                                    "extension", extension,
+                                    "sizeBytes", Long.toString(sizeBytes),
+                                    "insertedAt", insertedAt));
+                        });
             }
 
-            assets.sort(Comparator.comparing((Map<String, String> item) -> item.getOrDefault("insertedAt", "")).reversed());
+            assets.sort(
+                    Comparator.comparing((Map<String, String> item) -> item.getOrDefault("insertedAt", "")).reversed());
             return assets;
         } catch (IOException e) {
             throw new RuntimeException("Failed to list image assets", e);
@@ -213,35 +224,35 @@ public class InvestorContentService {
             List<Map<String, String>> assets = new ArrayList<>();
             try (var stream = Files.walk(root)) {
                 stream.filter(Files::isRegularFile)
-                    .forEach(path -> {
-                        try {
-                            String filename = path.getFileName().toString();
-                            String extension = safeExtension(filename);
-                            boolean isDocument = DOCUMENT_EXTENSIONS.contains(extension);
-                            if (!isDocument) {
-                                return;
+                        .forEach(path -> {
+                            try {
+                                String filename = path.getFileName().toString();
+                                String extension = safeExtension(filename);
+                                boolean isDocument = DOCUMENT_EXTENSIONS.contains(extension);
+                                if (!isDocument) {
+                                    return;
+                                }
+
+                                Path relative = root.relativize(path);
+                                String relativeUrl = relative.toString().replace('\\', '/');
+                                String url = baseUrl + "/uploads/" + relativeUrl;
+                                long sizeBytes = Files.size(path);
+                                String insertedAt = Files.getLastModifiedTime(path).toInstant().toString();
+
+                                assets.add(Map.of(
+                                        "name", filename,
+                                        "url", url,
+                                        "path", relativeUrl,
+                                        "extension", extension,
+                                        "sizeBytes", Long.toString(sizeBytes),
+                                        "insertedAt", insertedAt));
+                            } catch (Exception ignored) {
                             }
-
-                            Path relative = root.relativize(path);
-                            String relativeUrl = relative.toString().replace('\\', '/');
-                            String url = baseUrl + "/uploads/" + relativeUrl;
-                            long sizeBytes = Files.size(path);
-                            String insertedAt = Files.getLastModifiedTime(path).toInstant().toString();
-
-                            assets.add(Map.of(
-                                "name", filename,
-                                "url", url,
-                                "path", relativeUrl,
-                                "extension", extension,
-                                "sizeBytes", Long.toString(sizeBytes),
-                                "insertedAt", insertedAt
-                            ));
-                        } catch (Exception ignored) {
-                        }
-                    });
+                        });
             }
 
-            assets.sort(Comparator.comparing((Map<String, String> item) -> item.getOrDefault("insertedAt", "")).reversed());
+            assets.sort(
+                    Comparator.comparing((Map<String, String> item) -> item.getOrDefault("insertedAt", "")).reversed());
             return assets;
         } catch (IOException e) {
             throw new RuntimeException("Failed to list file assets", e);
@@ -314,50 +325,58 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'historicalMilestones'")
     public List<HistoricalMilestoneDTO> getHistoricalMilestones() {
         return historicalMilestoneRepository.findAllByActiveTrueOrderByDisplayOrderAscMilestoneYearAsc()
-            .stream().map(this::toMilestoneDTO).collect(Collectors.toList());
+                .stream().map(this::toMilestoneDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'historicalMilestone:' + #id")
     public HistoricalMilestoneDTO getHistoricalMilestoneById(Long id) {
         return historicalMilestoneRepository.findById(id)
-            .map(this::toMilestoneDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
+                .map(this::toMilestoneDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public HistoricalMilestoneDTO createHistoricalMilestone(HistoricalMilestoneDTO dto) {
         HistoricalMilestone e = HistoricalMilestone.builder()
-            .title(dto.getTitle())
-            .description(dto.getDescription() != null ? dto.getDescription() : "")
-            .milestoneYear(dto.getMilestoneYear() != null ? dto.getMilestoneYear() : java.time.Year.now().getValue())
-            .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
-            .imageUrl(dto.getImageUrl() != null ? dto.getImageUrl() : "")
-            .contentHtml(dto.getContentHtml() != null ? dto.getContentHtml() : "")
-            .eventTitle(dto.getEventTitle() != null ? dto.getEventTitle() : "")
-            .active(true)
-            .build();
+                .title(dto.getTitle())
+                .description(dto.getDescription() != null ? dto.getDescription() : "")
+                .milestoneYear(
+                        dto.getMilestoneYear() != null ? dto.getMilestoneYear() : java.time.Year.now().getValue())
+                .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
+                .imageUrl(dto.getImageUrl() != null ? dto.getImageUrl() : "")
+                .contentHtml(dto.getContentHtml() != null ? dto.getContentHtml() : "")
+                .eventTitle(dto.getEventTitle() != null ? dto.getEventTitle() : "")
+                .active(true)
+                .build();
         return toMilestoneDTO(historicalMilestoneRepository.save(e));
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public HistoricalMilestoneDTO updateHistoricalMilestone(Long id, HistoricalMilestoneDTO dto) {
         HistoricalMilestone e = historicalMilestoneRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
-        if (dto.getTitle() != null) e.setTitle(dto.getTitle());
-        if (dto.getDescription() != null) e.setDescription(dto.getDescription());
-        if (dto.getMilestoneYear() != null) e.setMilestoneYear(dto.getMilestoneYear());
-        if (dto.getDisplayOrder() != null) e.setDisplayOrder(dto.getDisplayOrder());
-        if (dto.getImageUrl() != null) e.setImageUrl(dto.getImageUrl());
-        if (dto.getContentHtml() != null) e.setContentHtml(dto.getContentHtml());
-        if (dto.getEventTitle() != null) e.setEventTitle(dto.getEventTitle());
+                .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
+        if (dto.getTitle() != null)
+            e.setTitle(dto.getTitle());
+        if (dto.getDescription() != null)
+            e.setDescription(dto.getDescription());
+        if (dto.getMilestoneYear() != null)
+            e.setMilestoneYear(dto.getMilestoneYear());
+        if (dto.getDisplayOrder() != null)
+            e.setDisplayOrder(dto.getDisplayOrder());
+        if (dto.getImageUrl() != null)
+            e.setImageUrl(dto.getImageUrl());
+        if (dto.getContentHtml() != null)
+            e.setContentHtml(dto.getContentHtml());
+        if (dto.getEventTitle() != null)
+            e.setEventTitle(dto.getEventTitle());
         return toMilestoneDTO(historicalMilestoneRepository.save(e));
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public void deleteHistoricalMilestone(Long id) {
         HistoricalMilestone e = historicalMilestoneRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("HistoricalMilestone", "id", id));
         e.setActive(false);
         historicalMilestoneRepository.save(e);
     }
@@ -367,45 +386,51 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'boardMembers'")
     public List<BoardMemberDTO> getBoardMembers() {
         return boardMemberRepository.findAllByActiveTrueOrderByDisplayOrderAsc()
-            .stream().map(this::toBoardMemberDTO).collect(Collectors.toList());
+                .stream().map(this::toBoardMemberDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'boardMember:' + #id")
     public BoardMemberDTO getBoardMemberById(Long id) {
         return boardMemberRepository.findById(id)
-            .map(this::toBoardMemberDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("BoardMember", "id", id));
+                .map(this::toBoardMemberDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("BoardMember", "id", id));
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public BoardMemberDTO createBoardMember(BoardMemberDTO dto) {
         BoardMember e = BoardMember.builder()
-            .fullName(dto.getFullName()).role(dto.getRole()).bio(dto.getBio())
-            .cvDocumentUrl(dto.getCvDocumentUrl() != null ? dto.getCvDocumentUrl() : "")
-            .photoUrl(dto.getPhotoUrl() != null ? dto.getPhotoUrl() : "")
-            .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
-            .active(true).build();
+                .fullName(dto.getFullName()).role(dto.getRole()).bio(dto.getBio())
+                .cvDocumentUrl(dto.getCvDocumentUrl() != null ? dto.getCvDocumentUrl() : "")
+                .photoUrl(dto.getPhotoUrl() != null ? dto.getPhotoUrl() : "")
+                .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
+                .active(true).build();
         return toBoardMemberDTO(boardMemberRepository.save(e));
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public BoardMemberDTO updateBoardMember(Long id, BoardMemberDTO dto) {
         BoardMember e = boardMemberRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("BoardMember", "id", id));
-        if (dto.getFullName() != null) e.setFullName(dto.getFullName());
-        if (dto.getRole() != null) e.setRole(dto.getRole());
-        if (dto.getBio() != null) e.setBio(dto.getBio());
-        if (dto.getCvDocumentUrl() != null) e.setCvDocumentUrl(dto.getCvDocumentUrl());
-        if (dto.getPhotoUrl() != null) e.setPhotoUrl(dto.getPhotoUrl());
-        if (dto.getDisplayOrder() != null) e.setDisplayOrder(dto.getDisplayOrder());
+                .orElseThrow(() -> new ResourceNotFoundException("BoardMember", "id", id));
+        if (dto.getFullName() != null)
+            e.setFullName(dto.getFullName());
+        if (dto.getRole() != null)
+            e.setRole(dto.getRole());
+        if (dto.getBio() != null)
+            e.setBio(dto.getBio());
+        if (dto.getCvDocumentUrl() != null)
+            e.setCvDocumentUrl(dto.getCvDocumentUrl());
+        if (dto.getPhotoUrl() != null)
+            e.setPhotoUrl(dto.getPhotoUrl());
+        if (dto.getDisplayOrder() != null)
+            e.setDisplayOrder(dto.getDisplayOrder());
         return toBoardMemberDTO(boardMemberRepository.save(e));
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public void deleteBoardMember(Long id) {
         BoardMember e = boardMemberRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("BoardMember", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("BoardMember", "id", id));
         e.setActive(false);
         boardMemberRepository.save(e);
     }
@@ -420,8 +445,10 @@ public class InvestorContentService {
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             String url = baseUrl + "/uploads/board-members/" + id + "/" + filename;
             BoardMemberDTO dto = new BoardMemberDTO();
-            if ("photo".equals(field)) dto.setPhotoUrl(url);
-            else dto.setCvDocumentUrl(url);
+            if ("photo".equals(field))
+                dto.setPhotoUrl(url);
+            else
+                dto.setCvDocumentUrl(url);
             return updateBoardMember(id, dto);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to upload board member file", ex);
@@ -433,26 +460,26 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'corporateGovernanceReports'")
     public List<CorporateGovernanceReportDTO> getCorporateGovernanceReports() {
         return corporateGovernanceReportRepository.findAllByOrderByReportYearDesc()
-            .stream().map(this::toGovernanceReportDTO).collect(Collectors.toList());
+                .stream().map(this::toGovernanceReportDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'corporateGovernanceReport:' + #id")
     public CorporateGovernanceReportDTO getCorporateGovernanceReportById(Long id) {
         return corporateGovernanceReportRepository.findById(id)
-            .map(this::toGovernanceReportDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("CorporateGovernanceReport", "id", id));
+                .map(this::toGovernanceReportDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("CorporateGovernanceReport", "id", id));
     }
 
     @Transactional
     @CacheEvict(value = "investorContent", allEntries = true)
     public CorporateGovernanceReportDTO createCorporateGovernanceReport(CorporateGovernanceReportDTO dto) {
         CorporateGovernanceReport entity = CorporateGovernanceReport.builder()
-            .title(dto.getTitle())
-            .documentUrl(dto.getDocumentUrl() != null ? dto.getDocumentUrl() : "#")
-            .reportYear(dto.getReportYear())
-            .language(dto.getLanguage() != null ? dto.getLanguage() : "pt")
-            .build();
+                .title(dto.getTitle())
+                .documentUrl(dto.getDocumentUrl() != null ? dto.getDocumentUrl() : "#")
+                .reportYear(dto.getReportYear())
+                .language(dto.getLanguage() != null ? dto.getLanguage() : "pt")
+                .build();
         return toGovernanceReportDTO(corporateGovernanceReportRepository.save(entity));
     }
 
@@ -460,11 +487,15 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public CorporateGovernanceReportDTO updateCorporateGovernanceReport(Long id, CorporateGovernanceReportDTO dto) {
         CorporateGovernanceReport entity = corporateGovernanceReportRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("CorporateGovernanceReport", "id", id));
-        if (dto.getTitle() != null) entity.setTitle(dto.getTitle());
-        if (dto.getDocumentUrl() != null) entity.setDocumentUrl(dto.getDocumentUrl());
-        if (dto.getReportYear() != null) entity.setReportYear(dto.getReportYear());
-        if (dto.getLanguage() != null) entity.setLanguage(dto.getLanguage());
+                .orElseThrow(() -> new ResourceNotFoundException("CorporateGovernanceReport", "id", id));
+        if (dto.getTitle() != null)
+            entity.setTitle(dto.getTitle());
+        if (dto.getDocumentUrl() != null)
+            entity.setDocumentUrl(dto.getDocumentUrl());
+        if (dto.getReportYear() != null)
+            entity.setReportYear(dto.getReportYear());
+        if (dto.getLanguage() != null)
+            entity.setLanguage(dto.getLanguage());
         return toGovernanceReportDTO(corporateGovernanceReportRepository.save(entity));
     }
 
@@ -478,7 +509,8 @@ public class InvestorContentService {
         try {
             Path uploadPath = Paths.get(uploadDir, "corporate-governance-reports", String.valueOf(id));
             Files.createDirectories(uploadPath);
-            String filename = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
+            String originalName = file.getOriginalFilename();
+            String filename = (originalName != null ? originalName : "document").replaceAll("[^a-zA-Z0-9._-]", "_");
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/corporate-governance-reports/" + id + "/" + filename;
         } catch (IOException e) {
@@ -491,17 +523,18 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'financialStatements:' + (#fromYear != null ? #fromYear : 'all') + ':' + (#toYear != null ? #toYear : 'all') + ':' + (#type != null ? #type : 'all')")
     public List<FinancialStatementDTO> getFinancialStatements(Integer fromYear, Integer toYear, String type) {
         List<FinancialStatement> list;
-        
+
         if (type != null && !type.isBlank()) {
             list = (fromYear != null && toYear != null)
-                ? financialStatementRepository.findByStatementTypeAndYearBetweenOrderByYearDesc(type, fromYear, toYear)
-                : financialStatementRepository.findByStatementTypeOrderByYearDesc(type);
+                    ? financialStatementRepository.findByStatementTypeAndYearBetweenOrderByYearDesc(type, fromYear,
+                            toYear)
+                    : financialStatementRepository.findByStatementTypeOrderByYearDesc(type);
         } else {
             list = (fromYear != null && toYear != null)
-                ? financialStatementRepository.findByYearBetweenOrderByYearDesc(fromYear, toYear)
-                : financialStatementRepository.findAllByOrderByYearDesc();
+                    ? financialStatementRepository.findByYearBetweenOrderByYearDesc(fromYear, toYear)
+                    : financialStatementRepository.findAllByOrderByYearDesc();
         }
-        
+
         return list.stream().map(this::toFinancialStatementDTO).collect(Collectors.toList());
     }
 
@@ -509,20 +542,21 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'financialStatement:' + #id")
     public FinancialStatementDTO getFinancialStatementById(Long id) {
         return financialStatementRepository.findById(id)
-            .map(this::toFinancialStatementDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("FinancialStatement", "id", id));
+                .map(this::toFinancialStatementDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("FinancialStatement", "id", id));
     }
 
     @Transactional
     @CacheEvict(value = "investorContent", allEntries = true)
     public FinancialStatementDTO createFinancialStatement(FinancialStatementDTO dto) {
         FinancialStatement entity = FinancialStatement.builder()
-            .year(dto.getYear())
-            .title(dto.getTitle())
-            .documentUrl(dto.getDocumentUrl() != null ? dto.getDocumentUrl() : "#")
-            .statementType(dto.getStatementType())
-            .language(dto.getLanguage() != null ? dto.getLanguage() : "pt")
-            .build();
+                .year(dto.getYear())
+                .title(dto.getTitle())
+                .documentUrl(
+                        dto.getDocumentUrl() != null && !dto.getDocumentUrl().isBlank() ? dto.getDocumentUrl() : "#")
+                .statementType(dto.getStatementType())
+                .language(dto.getLanguage() != null && !dto.getLanguage().isBlank() ? dto.getLanguage() : "pt")
+                .build();
         return toFinancialStatementDTO(financialStatementRepository.save(entity));
     }
 
@@ -530,12 +564,17 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public FinancialStatementDTO updateFinancialStatement(Long id, FinancialStatementDTO dto) {
         FinancialStatement entity = financialStatementRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("FinancialStatement", "id", id));
-        if (dto.getYear() != null) entity.setYear(dto.getYear());
-        if (dto.getTitle() != null) entity.setTitle(dto.getTitle());
-        if (dto.getDocumentUrl() != null) entity.setDocumentUrl(dto.getDocumentUrl());
-        if (dto.getStatementType() != null) entity.setStatementType(dto.getStatementType());
-        if (dto.getLanguage() != null) entity.setLanguage(dto.getLanguage());
+                .orElseThrow(() -> new ResourceNotFoundException("FinancialStatement", "id", id));
+        if (dto.getYear() != null)
+            entity.setYear(dto.getYear());
+        if (dto.getTitle() != null && !dto.getTitle().isBlank())
+            entity.setTitle(dto.getTitle());
+        if (dto.getDocumentUrl() != null && !dto.getDocumentUrl().isBlank())
+            entity.setDocumentUrl(dto.getDocumentUrl());
+        if (dto.getStatementType() != null && !dto.getStatementType().isBlank())
+            entity.setStatementType(dto.getStatementType());
+        if (dto.getLanguage() != null && !dto.getLanguage().isBlank())
+            entity.setLanguage(dto.getLanguage());
         return toFinancialStatementDTO(financialStatementRepository.save(entity));
     }
 
@@ -549,7 +588,8 @@ public class InvestorContentService {
         try {
             Path uploadPath = Paths.get(uploadDir, "financial-statements", String.valueOf(id));
             Files.createDirectories(uploadPath);
-            String filename = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
+            String originalName = file.getOriginalFilename();
+            String filename = (originalName != null ? originalName : "document").replaceAll("[^a-zA-Z0-9._-]", "_");
             Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/financial-statements/" + id + "/" + filename;
         } catch (IOException e) {
@@ -557,13 +597,87 @@ public class InvestorContentService {
         }
     }
 
+    // ---- Investor Documents ----
+    @Transactional(readOnly = true)
+    @Cacheable(value = "investorContent", key = "'investorDocuments'")
+    public List<InvestorDocumentDTO> getInvestorDocuments() {
+        return investorDocumentRepository.findAllByOrderByYearDescCreatedAtDesc()
+                .stream().map(this::toInvestorDocumentDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(value = "investorContent", key = "'investorDocument:' + #id")
+    public InvestorDocumentDTO getInvestorDocumentById(Long id) {
+        return investorDocumentRepository.findById(id)
+                .map(this::toInvestorDocumentDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("InvestorDocument", "id", id));
+    }
+
+    @Transactional
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public InvestorDocumentDTO createInvestorDocument(InvestorDocumentDTO dto) {
+        InvestorDocument entity = InvestorDocument.builder()
+                .title(dto.getTitle())
+                .documentUrl(dto.getDocumentUrl() != null && !dto.getDocumentUrl().isBlank() ? dto.getDocumentUrl() : "#")
+                .year(dto.getYear())
+                .category(dto.getCategory() != null ? dto.getCategory() : "Documento")
+                .build();
+        return toInvestorDocumentDTO(investorDocumentRepository.save(entity));
+    }
+
+    @Transactional
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public InvestorDocumentDTO updateInvestorDocument(Long id, InvestorDocumentDTO dto) {
+        InvestorDocument entity = investorDocumentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("InvestorDocument", "id", id));
+        if (dto.getTitle() != null && !dto.getTitle().isBlank())
+            entity.setTitle(dto.getTitle());
+        if (dto.getDocumentUrl() != null && !dto.getDocumentUrl().isBlank())
+            entity.setDocumentUrl(dto.getDocumentUrl());
+        if (dto.getYear() != null)
+            entity.setYear(dto.getYear());
+        if (dto.getCategory() != null)
+            entity.setCategory(dto.getCategory());
+        return toInvestorDocumentDTO(investorDocumentRepository.save(entity));
+    }
+
+    @Transactional
+    @CacheEvict(value = "investorContent", allEntries = true)
+    public void deleteInvestorDocument(Long id) {
+        investorDocumentRepository.deleteById(id);
+    }
+
+    public String uploadInvestorDocumentFile(MultipartFile file, Long id) {
+        try {
+            Path uploadPath = Paths.get(uploadDir, "investor-documents", String.valueOf(id));
+            Files.createDirectories(uploadPath);
+            String originalName = file.getOriginalFilename();
+            String filename = (originalName != null ? originalName : "document").replaceAll("[^a-zA-Z0-9._-]", "_");
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            return baseUrl + "/uploads/investor-documents/" + id + "/" + filename;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store file: " + e.getMessage(), e);
+        }
+    }
+
+    private InvestorDocumentDTO toInvestorDocumentDTO(InvestorDocument e) {
+        return InvestorDocumentDTO.builder()
+                .id(e.getId())
+                .title(e.getTitle())
+                .documentUrl(e.getDocumentUrl())
+                .year(e.getYear())
+                .category(e.getCategory())
+                .createdAt(e.getCreatedAt())
+                .build();
+    }
+
     // ---- Business indicators ----
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'businessIndicators:' + (#category != null ? #category : 'all')")
     public List<BusinessIndicatorDTO> getBusinessIndicators(String category) {
         List<BusinessIndicator> list = category != null && !category.isBlank()
-            ? businessIndicatorRepository.findByCategoryOrderByPeriodYearDesc(category.trim())
-            : businessIndicatorRepository.findAllByOrderByPeriodYearDescPeriodQuarterDesc();
+                ? businessIndicatorRepository.findByCategoryOrderByPeriodYearDesc(category.trim())
+                : businessIndicatorRepository.findAllByOrderByPeriodYearDescPeriodQuarterDesc();
         return list.stream().map(this::toBusinessIndicatorDTO).collect(Collectors.toList());
     }
 
@@ -571,22 +685,22 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'businessIndicator:' + #id")
     public BusinessIndicatorDTO getBusinessIndicatorById(Long id) {
         return businessIndicatorRepository.findById(id)
-            .map(this::toBusinessIndicatorDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("BusinessIndicator", "id", id));
+                .map(this::toBusinessIndicatorDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("BusinessIndicator", "id", id));
     }
 
     @Transactional
     @CacheEvict(value = "investorContent", allEntries = true)
     public BusinessIndicatorDTO createBusinessIndicator(BusinessIndicatorDTO dto) {
         BusinessIndicator entity = BusinessIndicator.builder()
-            .title(dto.getTitle())
-            .indicatorValue(dto.getIndicatorValue())
-            .numericValue(dto.getNumericValue())
-            .periodYear(dto.getPeriodYear() != null ? dto.getPeriodYear() : java.time.LocalDateTime.now().getYear())
-            .periodQuarter(dto.getPeriodQuarter())
-            .category(dto.getCategory() != null ? dto.getCategory() : "Outro")
-            .unit(dto.getUnit())
-            .build();
+                .title(dto.getTitle())
+                .indicatorValue(dto.getIndicatorValue())
+                .numericValue(dto.getNumericValue())
+                .periodYear(dto.getPeriodYear() != null ? dto.getPeriodYear() : java.time.LocalDateTime.now().getYear())
+                .periodQuarter(dto.getPeriodQuarter())
+                .category(dto.getCategory() != null ? dto.getCategory() : "Outro")
+                .unit(dto.getUnit())
+                .build();
         return toBusinessIndicatorDTO(businessIndicatorRepository.save(entity));
     }
 
@@ -594,14 +708,21 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public BusinessIndicatorDTO updateBusinessIndicator(Long id, BusinessIndicatorDTO dto) {
         BusinessIndicator entity = businessIndicatorRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("BusinessIndicator", "id", id));
-        if (dto.getTitle() != null) entity.setTitle(dto.getTitle());
-        if (dto.getIndicatorValue() != null) entity.setIndicatorValue(dto.getIndicatorValue());
-        if (dto.getNumericValue() != null) entity.setNumericValue(dto.getNumericValue());
-        if (dto.getPeriodYear() != null) entity.setPeriodYear(dto.getPeriodYear());
-        if (dto.getPeriodQuarter() != null) entity.setPeriodQuarter(dto.getPeriodQuarter());
-        if (dto.getCategory() != null) entity.setCategory(dto.getCategory());
-        if (dto.getUnit() != null) entity.setUnit(dto.getUnit());
+                .orElseThrow(() -> new ResourceNotFoundException("BusinessIndicator", "id", id));
+        if (dto.getTitle() != null)
+            entity.setTitle(dto.getTitle());
+        if (dto.getIndicatorValue() != null)
+            entity.setIndicatorValue(dto.getIndicatorValue());
+        if (dto.getNumericValue() != null)
+            entity.setNumericValue(dto.getNumericValue());
+        if (dto.getPeriodYear() != null)
+            entity.setPeriodYear(dto.getPeriodYear());
+        if (dto.getPeriodQuarter() != null)
+            entity.setPeriodQuarter(dto.getPeriodQuarter());
+        if (dto.getCategory() != null)
+            entity.setCategory(dto.getCategory());
+        if (dto.getUnit() != null)
+            entity.setUnit(dto.getUnit());
         return toBusinessIndicatorDTO(businessIndicatorRepository.save(entity));
     }
 
@@ -630,27 +751,29 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'communication:' + #id")
     public CommunicationDTO getCommunicationById(Long id) {
         return communicationRepository.findById(id)
-            .map(this::toCommunicationDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("Communication", "id", id));
+                .map(this::toCommunicationDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Communication", "id", id));
     }
 
     @Transactional
     @CacheEvict(value = "investorContent", allEntries = true)
     public CommunicationDTO createCommunication(CommunicationDTO dto) {
         Communication entity = Communication.builder()
-            .title(dto.getTitle())
-            .communicationType(dto.getCommunicationType())
-            .summary(dto.getSummary())
-            .documentUrl(dto.getDocumentUrl())
-            .publishedAt(dto.getPublishedAt() != null ? dto.getPublishedAt() : java.time.LocalDateTime.now())
-            .slugId(dto.getSlugId())
-            .category(dto.getCategory())
-            .contentHtml(dto.getContentHtml())
-            .imageUrl(dto.getImageUrl())
-            .author(dto.getAuthor())
-            .displaySections(dto.getDisplaySections() != null && !dto.getDisplaySections().isBlank() ? dto.getDisplaySections() : "HOME,COMUNICADOS")
-            .active(true)
-            .build();
+                .title(dto.getTitle())
+                .communicationType(dto.getCommunicationType())
+                .summary(dto.getSummary())
+                .documentUrl(dto.getDocumentUrl())
+                .publishedAt(dto.getPublishedAt() != null ? dto.getPublishedAt() : java.time.LocalDateTime.now())
+                .slugId(dto.getSlugId())
+                .category(dto.getCategory())
+                .contentHtml(dto.getContentHtml())
+                .imageUrl(dto.getImageUrl())
+                .author(dto.getAuthor())
+                .displaySections(dto.getDisplaySections() != null && !dto.getDisplaySections().isBlank()
+                        ? dto.getDisplaySections()
+                        : "HOME,COMUNICADOS")
+                .active(true)
+                .build();
         return toCommunicationDTO(communicationRepository.save(entity));
     }
 
@@ -658,12 +781,13 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public CommunicationDTO updateCommunication(Long id, CommunicationDTO dto) {
         Communication entity = communicationRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Communication", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Communication", "id", id));
         entity.setTitle(dto.getTitle());
         entity.setCommunicationType(dto.getCommunicationType());
         entity.setSummary(dto.getSummary());
         entity.setDocumentUrl(dto.getDocumentUrl());
-        if (dto.getPublishedAt() != null) entity.setPublishedAt(dto.getPublishedAt());
+        if (dto.getPublishedAt() != null)
+            entity.setPublishedAt(dto.getPublishedAt());
         entity.setSlugId(dto.getSlugId());
         entity.setCategory(dto.getCategory());
         entity.setContentHtml(dto.getContentHtml());
@@ -679,7 +803,7 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public void deleteCommunication(Long id) {
         Communication entity = communicationRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Communication", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Communication", "id", id));
         entity.setActive(false);
         communicationRepository.save(entity);
     }
@@ -689,8 +813,8 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'events:' + (#upcomingOnly != null ? #upcomingOnly : 'all')")
     public List<EventDTO> getEvents(Boolean upcomingOnly) {
         List<Event> list = Boolean.TRUE.equals(upcomingOnly)
-            ? eventRepository.findByEventDateAfterAndActiveTrueOrderByEventDateAsc(LocalDateTime.now())
-            : eventRepository.findAllByActiveTrueOrderByEventDateAsc();
+                ? eventRepository.findByEventDateAfterAndActiveTrueOrderByEventDateAsc(LocalDateTime.now())
+                : eventRepository.findAllByActiveTrueOrderByEventDateAsc();
         return list.stream().map(this::toEventDTO).collect(Collectors.toList());
     }
 
@@ -698,22 +822,22 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'event:' + #id")
     public EventDTO getEventById(Long id) {
         return eventRepository.findById(id)
-            .map(this::toEventDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("Event", "id", id));
+                .map(this::toEventDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", id));
     }
 
     @Transactional
     @CacheEvict(value = "investorContent", allEntries = true)
     public EventDTO createEvent(EventDTO dto) {
         Event entity = Event.builder()
-            .title(dto.getTitle())
-            .description(dto.getDescription())
-            .eventDate(dto.getEventDate())
-            .endDate(dto.getEndDate())
-            .location(dto.getLocation())
-            .eventType(dto.getEventType())
-            .active(true)
-            .build();
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .eventDate(dto.getEventDate())
+                .endDate(dto.getEndDate())
+                .location(dto.getLocation())
+                .eventType(dto.getEventType())
+                .active(true)
+                .build();
         return toEventDTO(eventRepository.save(entity));
     }
 
@@ -721,7 +845,7 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public EventDTO updateEvent(Long id, EventDTO dto) {
         Event entity = eventRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Event", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", id));
         entity.setTitle(dto.getTitle());
         entity.setDescription(dto.getDescription());
         entity.setEventDate(dto.getEventDate());
@@ -735,7 +859,7 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public void deleteEvent(Long id) {
         Event entity = eventRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Event", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", id));
         entity.setActive(false);
         eventRepository.save(entity);
     }
@@ -745,15 +869,15 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'subsidiaries'")
     public List<SubsidiaryDTO> getSubsidiaries() {
         return subsidiaryRepository.findAllByActiveTrueOrderByEntityNameAsc()
-            .stream().map(this::toSubsidiaryDTO).collect(Collectors.toList());
+                .stream().map(this::toSubsidiaryDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'subsidiary:' + #id")
     public SubsidiaryDTO getSubsidiaryById(Long id) {
         return subsidiaryRepository.findById(id)
-            .map(this::toSubsidiaryDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("Subsidiary", "id", id));
+                .map(this::toSubsidiaryDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Subsidiary", "id", id));
     }
 
     // ---- General Assembly documents ----
@@ -761,15 +885,15 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'generalAssemblyDocuments'")
     public List<GeneralAssemblyDocumentDTO> getGeneralAssemblyDocuments() {
         return generalAssemblyDocumentRepository.findAllByOrderByAssemblyYearDesc()
-            .stream().map(this::toGeneralAssemblyDocumentDTO).collect(Collectors.toList());
+                .stream().map(this::toGeneralAssemblyDocumentDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'generalAssemblyDocument:' + #id")
     public GeneralAssemblyDocumentDTO getGeneralAssemblyDocumentById(Long id) {
         return generalAssemblyDocumentRepository.findById(id)
-            .map(this::toGeneralAssemblyDocumentDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("GeneralAssemblyDocument", "id", id));
+                .map(this::toGeneralAssemblyDocumentDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("GeneralAssemblyDocument", "id", id));
     }
 
     // ---- General Assemblies ----
@@ -777,8 +901,9 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'generalAssemblies:' + (#assemblyType != null ? #assemblyType : 'all')")
     public List<GeneralAssemblyDTO> getGeneralAssemblies(String assemblyType) {
         List<GeneralAssembly> list = assemblyType != null && !assemblyType.isBlank()
-            ? generalAssemblyRepository.findAllByActiveTrueAndAssemblyTypeOrderByMeetingYearDesc(assemblyType.trim())
-            : generalAssemblyRepository.findAllByActiveTrueOrderByMeetingYearDesc();
+                ? generalAssemblyRepository
+                        .findAllByActiveTrueAndAssemblyTypeOrderByMeetingYearDesc(assemblyType.trim())
+                : generalAssemblyRepository.findAllByActiveTrueOrderByMeetingYearDesc();
         return list.stream().map(this::toGeneralAssemblyDTO).collect(Collectors.toList());
     }
 
@@ -786,16 +911,16 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'generalAssembly:' + #id")
     public GeneralAssemblyDTO getGeneralAssemblyById(Long id) {
         return generalAssemblyRepository.findById(id)
-            .map(this::toGeneralAssemblyDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", id));
+                .map(this::toGeneralAssemblyDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", id));
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'generalAssemblyBySlug:' + #slugId")
     public GeneralAssemblyDTO getGeneralAssemblyBySlug(String slugId) {
         return generalAssemblyRepository.findBySlugId(slugId)
-            .map(this::toGeneralAssemblyDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "slugId", slugId));
+                .map(this::toGeneralAssemblyDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "slugId", slugId));
     }
 
     // ---- General Assembly CRUD ----
@@ -804,21 +929,21 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public GeneralAssemblyDTO createGeneralAssembly(GeneralAssemblyDTO dto) {
         GeneralAssembly entity = GeneralAssembly.builder()
-            .slugId(dto.getSlugId() != null ? dto.getSlugId() : UUID.randomUUID().toString())
-            .title(dto.getTitle())
-            .meetingYear(dto.getMeetingYear())
-            .meetingDate(dto.getMeetingDate())
-            .status(dto.getStatus() != null ? dto.getStatus() : "Realizada")
-            .assemblyType(dto.getAssemblyType() != null ? dto.getAssemblyType() : "Ordinária")
-            .summary(dto.getSummary())
-            .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
-            .active(true)
-            .build();
+                .slugId(dto.getSlugId() != null ? dto.getSlugId() : UUID.randomUUID().toString())
+                .title(dto.getTitle())
+                .meetingYear(dto.getMeetingYear())
+                .meetingDate(dto.getMeetingDate())
+                .status(dto.getStatus() != null ? dto.getStatus() : "Realizada")
+                .assemblyType(dto.getAssemblyType() != null ? dto.getAssemblyType() : "Ordinária")
+                .summary(dto.getSummary())
+                .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
+                .active(true)
+                .build();
         if (dto.getAgendaItems() != null) {
             for (int i = 0; i < dto.getAgendaItems().size(); i++) {
                 final int order = i;
                 GeneralAssemblyAgendaItem item = GeneralAssemblyAgendaItem.builder()
-                    .assembly(entity).itemText(dto.getAgendaItems().get(i)).displayOrder(order).build();
+                        .assembly(entity).itemText(dto.getAgendaItems().get(i)).displayOrder(order).build();
                 entity.getAgendaItems().add(item);
             }
         }
@@ -828,21 +953,30 @@ public class InvestorContentService {
     @Transactional
     @CacheEvict(value = "investorContent", allEntries = true)
     public GeneralAssemblyDTO updateGeneralAssembly(Long id, GeneralAssemblyDTO dto) {
-        GeneralAssembly entity = generalAssemblyRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", id));
-        if (dto.getTitle() != null) entity.setTitle(dto.getTitle());
-        if (dto.getMeetingYear() != null) entity.setMeetingYear(dto.getMeetingYear());
-        if (dto.getMeetingDate() != null) entity.setMeetingDate(dto.getMeetingDate());
-        if (dto.getStatus() != null) entity.setStatus(dto.getStatus());
-        if (dto.getAssemblyType() != null) entity.setAssemblyType(dto.getAssemblyType());
-        if (dto.getSummary() != null) entity.setSummary(dto.getSummary());
-        if (dto.getDisplayOrder() != null) entity.setDisplayOrder(dto.getDisplayOrder());
+        GeneralAssembly entity = generalAssemblyRepository.findByIdWithAgendaItems(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", id));
+        // Force-initialize the documents collection while the session is open
+        entity.getDocuments().size();
+        if (dto.getTitle() != null)
+            entity.setTitle(dto.getTitle());
+        if (dto.getMeetingYear() != null)
+            entity.setMeetingYear(dto.getMeetingYear());
+        if (dto.getMeetingDate() != null)
+            entity.setMeetingDate(dto.getMeetingDate());
+        if (dto.getStatus() != null)
+            entity.setStatus(dto.getStatus());
+        if (dto.getAssemblyType() != null)
+            entity.setAssemblyType(dto.getAssemblyType());
+        if (dto.getSummary() != null)
+            entity.setSummary(dto.getSummary());
+        if (dto.getDisplayOrder() != null)
+            entity.setDisplayOrder(dto.getDisplayOrder());
         if (dto.getAgendaItems() != null) {
             entity.getAgendaItems().clear();
             for (int i = 0; i < dto.getAgendaItems().size(); i++) {
                 final int order = i;
                 entity.getAgendaItems().add(GeneralAssemblyAgendaItem.builder()
-                    .assembly(entity).itemText(dto.getAgendaItems().get(i)).displayOrder(order).build());
+                        .assembly(entity).itemText(dto.getAgendaItems().get(i)).displayOrder(order).build());
             }
         }
         return toGeneralAssemblyDTO(generalAssemblyRepository.save(entity));
@@ -852,7 +986,7 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public void deleteGeneralAssembly(Long id) {
         GeneralAssembly entity = generalAssemblyRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", id));
         entity.setActive(false);
         generalAssemblyRepository.save(entity);
     }
@@ -863,16 +997,16 @@ public class InvestorContentService {
     @CacheEvict(value = "investorContent", allEntries = true)
     public GeneralAssemblyDocumentDTO addAssemblyDocument(Long assemblyId, GeneralAssemblyDocumentDTO dto) {
         GeneralAssembly assembly = generalAssemblyRepository.findById(assemblyId)
-            .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", assemblyId));
+                .orElseThrow(() -> new ResourceNotFoundException("GeneralAssembly", "id", assemblyId));
         GeneralAssemblyDocument doc = GeneralAssemblyDocument.builder()
-            .assembly(assembly)
-            .assemblyYear(dto.getAssemblyYear() != null ? dto.getAssemblyYear() : assembly.getMeetingYear())
-            .title(dto.getTitle())
-            .documentUrl(dto.getDocumentUrl())
-            .documentType(dto.getDocumentType() != null ? dto.getDocumentType() : "PDF")
-            .fileSizeLabel(dto.getFileSizeLabel())
-            .assemblyDate(dto.getAssemblyDate())
-            .build();
+                .assembly(assembly)
+                .assemblyYear(dto.getAssemblyYear() != null ? dto.getAssemblyYear() : assembly.getMeetingYear())
+                .title(dto.getTitle())
+                .documentUrl(dto.getDocumentUrl())
+                .documentType(dto.getDocumentType() != null ? dto.getDocumentType() : "PDF")
+                .fileSizeLabel(dto.getFileSizeLabel())
+                .assemblyDate(dto.getAssemblyDate())
+                .build();
         return toGeneralAssemblyDocumentDTO(generalAssemblyDocumentRepository.save(doc));
     }
 
@@ -892,7 +1026,7 @@ public class InvestorContentService {
             Path uploadPath = Paths.get(uploadDir, "assemblies", String.valueOf(assemblyId));
             Files.createDirectories(uploadPath);
             String filename = file.getOriginalFilename()
-                .replaceAll("[^a-zA-Z0-9._-]", "_");
+                    .replaceAll("[^a-zA-Z0-9._-]", "_");
             Path dest = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/assemblies/" + assemblyId + "/" + filename;
@@ -906,7 +1040,7 @@ public class InvestorContentService {
             Path uploadPath = Paths.get(uploadDir, "communications", String.valueOf(commId));
             Files.createDirectories(uploadPath);
             String filename = file.getOriginalFilename()
-                .replaceAll("[^a-zA-Z0-9._-]", "_");
+                    .replaceAll("[^a-zA-Z0-9._-]", "_");
             Path dest = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
             return baseUrl + "/uploads/communications/" + commId + "/" + filename;
@@ -914,22 +1048,28 @@ public class InvestorContentService {
             throw new RuntimeException("Failed to store communication file: " + e.getMessage(), e);
         }
     }
+
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'shareholderStructure'")
     public List<ShareholderStructureDTO> getShareholderStructure() {
         return shareholderStructureRepository.findAllByActiveTrueOrderByDisplayOrderAsc()
-            .stream().map(this::toShareholderStructureDTO).collect(Collectors.toList());
+                .stream().map(this::toShareholderStructureDTO).collect(Collectors.toList());
     }
 
     @CacheEvict(value = "investorContent", allEntries = true)
     public ShareholderStructureDTO updateShareholderStructure(Long id, ShareholderStructureDTO dto) {
         ShareholderStructure e = shareholderStructureRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("ShareholderStructure", "id", id));
-        if (dto.getShareholderName() != null) e.setShareholderName(dto.getShareholderName());
-        if (dto.getSharesLabel() != null) e.setSharesLabel(dto.getSharesLabel());
-        if (dto.getPercentage() != null) e.setPercentage(dto.getPercentage());
-        if (dto.getDisplayColor() != null) e.setDisplayColor(dto.getDisplayColor());
-        if (dto.getDisplayOrder() != null) e.setDisplayOrder(dto.getDisplayOrder());
+                .orElseThrow(() -> new ResourceNotFoundException("ShareholderStructure", "id", id));
+        if (dto.getShareholderName() != null)
+            e.setShareholderName(dto.getShareholderName());
+        if (dto.getSharesLabel() != null)
+            e.setSharesLabel(dto.getSharesLabel());
+        if (dto.getPercentage() != null)
+            e.setPercentage(dto.getPercentage());
+        if (dto.getDisplayColor() != null)
+            e.setDisplayColor(dto.getDisplayColor());
+        if (dto.getDisplayOrder() != null)
+            e.setDisplayOrder(dto.getDisplayOrder());
         return toShareholderStructureDTO(shareholderStructureRepository.save(e));
     }
 
@@ -937,15 +1077,16 @@ public class InvestorContentService {
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'investorRelations'")
     public List<InvestorRelationsDTO> getInvestorRelations() {
-        return investorRelationsRepository.findAll().stream().map(this::toInvestorRelationsDTO).collect(Collectors.toList());
+        return investorRelationsRepository.findAll().stream().map(this::toInvestorRelationsDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'investorRelations:' + #id")
     public InvestorRelationsDTO getInvestorRelationsById(Long id) {
         return investorRelationsRepository.findById(id)
-            .map(this::toInvestorRelationsDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("InvestorRelations", "id", id));
+                .map(this::toInvestorRelationsDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("InvestorRelations", "id", id));
     }
 
     // ---- External auditors ----
@@ -953,27 +1094,28 @@ public class InvestorContentService {
     @Cacheable(value = "investorContent", key = "'externalAuditors'")
     public List<ExternalAuditorDTO> getExternalAuditors() {
         return externalAuditorRepository.findAllByOrderByPeriodFromDesc()
-            .stream().map(this::toExternalAuditorDTO).collect(Collectors.toList());
+                .stream().map(this::toExternalAuditorDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'externalAuditor:' + #id")
     public ExternalAuditorDTO getExternalAuditorById(Long id) {
         return externalAuditorRepository.findById(id)
-            .map(this::toExternalAuditorDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("ExternalAuditor", "id", id));
+                .map(this::toExternalAuditorDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("ExternalAuditor", "id", id));
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "investorContent", key = "'externalAuditorCurrent'")
     public ExternalAuditorDTO getCurrentExternalAuditor() {
         return externalAuditorRepository.findFirstByCurrentTrue()
-            .map(this::toExternalAuditorDTO)
-            .orElse(null);
+                .map(this::toExternalAuditorDTO)
+                .orElse(null);
     }
 
     /**
-     * Evict all investor content cache entries (e.g. after admin updates static content).
+     * Evict all investor content cache entries (e.g. after admin updates static
+     * content).
      */
     @CacheEvict(value = "investorContent", allEntries = true)
     public void evictInvestorContentCache() {
@@ -982,9 +1124,12 @@ public class InvestorContentService {
     // ---- Organogram (JSON file-based) ----
 
     /**
-     * Returns the full organogram hierarchy loaded from organograma.json in the classpath.
-     * To update the organogram, edit src/main/resources/organograma.json and redeploy
-     * (or call POST /api/v1/investor-content/cache/evict to refresh cache without redeploy).
+     * Returns the full organogram hierarchy loaded from organograma.json in the
+     * classpath.
+     * To update the organogram, edit src/main/resources/organograma.json and
+     * redeploy
+     * (or call POST /api/v1/investor-content/cache/evict to refresh cache without
+     * redeploy).
      */
     @Cacheable(value = "investorContent", key = "'organogram'")
     public OrganigramDTO getOrganogram() {
@@ -992,7 +1137,8 @@ public class InvestorContentService {
     }
 
     /**
-     * Saves the full organogram hierarchy back to organograma.json on the classpath.
+     * Saves the full organogram hierarchy back to organograma.json on the
+     * classpath.
      * Also evicts the cached version so subsequent GET calls return fresh data.
      */
     @CacheEvict(value = "investorContent", key = "'organogram'")
@@ -1338,29 +1484,42 @@ public class InvestorContentService {
         FinancialDashboardDTO dto = readJson("financial_dashboard.json", FinancialDashboardDTO.class);
         if (dto == null) {
             dto = FinancialDashboardDTO.builder()
-                .headerTitle("Performance Financeira Interactiva")
-                .headerDescription("Acompanhe semanalmente a evolução dos principais indicadores de performance (KPIs) e rácios estratégicos da ENSA Seguros.")
-                .powerBiUrl("https://app.powerbi.com/view?r=eyJrIjoiODZkZTcyYm")
-                .kpis(java.util.List.of(
-                    FinancialDashboardDTO.KpiCardDTO.builder().label("Prémios Brutos Emitidos").value("473,1 mM").suffix("AOA").growth("+12.5%").isNegativeGood(false).color("#164993").build(),
-                    FinancialDashboardDTO.KpiCardDTO.builder().label("Lucro Líquido do Exercício").value("18,4 mM").suffix("AOA").growth("+8.2%").isNegativeGood(false).color("#10b981").build(),
-                    FinancialDashboardDTO.KpiCardDTO.builder().label("Rácio Combinado").value("94.2%").suffix("").growth("-2.1%").isNegativeGood(true).color("#e63c2e").build(),
-                    FinancialDashboardDTO.KpiCardDTO.builder().label("Rácio de Solvência").value("185%").suffix("").growth("+5.4%").isNegativeGood(false).color("#6366f1").build()
-                ))
-                .chartData(java.util.List.of(
-                    FinancialDashboardDTO.ChartRowDTO.builder().year("2019").premiums(210.0).claims(145.0).profit(12.0).build(),
-                    FinancialDashboardDTO.ChartRowDTO.builder().year("2020").premiums(245.0).claims(160.0).profit(14.0).build(),
-                    FinancialDashboardDTO.ChartRowDTO.builder().year("2021").premiums(278.0).claims(185.0).profit(15.0).build(),
-                    FinancialDashboardDTO.ChartRowDTO.builder().year("2022").premiums(312.0).claims(198.0).profit(17.0).build(),
-                    FinancialDashboardDTO.ChartRowDTO.builder().year("2023").premiums(379.0).claims(235.0).profit(18.0).build(),
-                    FinancialDashboardDTO.ChartRowDTO.builder().year("2024").premiums(473.0).claims(282.0).profit(21.0).build()
-                ))
-                .segments(java.util.List.of(
-                    FinancialDashboardDTO.SegmentDTO.builder().name("Não-Vida").value(72.0).color("#164993").build(),
-                    FinancialDashboardDTO.SegmentDTO.builder().name("Vida").value(28.0).color("#e63c2e").build()
-                ))
-                .marketShareNote("Liderança consolidada com 37% de quota de mercado GERAL em Angola.")
-                .build();
+                    .headerTitle("Performance Financeira Interactiva")
+                    .headerDescription(
+                            "Acompanhe semanalmente a evolução dos principais indicadores de performance (KPIs) e rácios estratégicos da ENSA Seguros.")
+                    .powerBiUrl("https://app.powerbi.com/view?r=eyJrIjoiODZkZTcyYm")
+                    .chartTitle("Evolução de Prémios e Sinistralidade")
+                    .kpis(java.util.List.of(
+                            FinancialDashboardDTO.KpiCardDTO.builder().label("Prémios Brutos Emitidos")
+                                    .value("473,1 mM").suffix("AOA").growth("+12.5%").isNegativeGood(false)
+                                    .color("#164993").build(),
+                            FinancialDashboardDTO.KpiCardDTO.builder().label("Lucro Líquido do Exercício")
+                                    .value("18,4 mM").suffix("AOA").growth("+8.2%").isNegativeGood(false)
+                                    .color("#10b981").build(),
+                            FinancialDashboardDTO.KpiCardDTO.builder().label("Rácio Combinado").value("94.2%")
+                                    .suffix("").growth("-2.1%").isNegativeGood(true).color("#e63c2e").build(),
+                            FinancialDashboardDTO.KpiCardDTO.builder().label("Rácio de Solvência").value("185%")
+                                    .suffix("").growth("+5.4%").isNegativeGood(false).color("#6366f1").build()))
+                    .chartData(java.util.List.of(
+                            FinancialDashboardDTO.ChartRowDTO.builder().year("2019").premiums(210.0).claims(145.0)
+                                    .profit(12.0).build(),
+                            FinancialDashboardDTO.ChartRowDTO.builder().year("2020").premiums(245.0).claims(160.0)
+                                    .profit(14.0).build(),
+                            FinancialDashboardDTO.ChartRowDTO.builder().year("2021").premiums(278.0).claims(185.0)
+                                    .profit(15.0).build(),
+                            FinancialDashboardDTO.ChartRowDTO.builder().year("2022").premiums(312.0).claims(198.0)
+                                    .profit(17.0).build(),
+                            FinancialDashboardDTO.ChartRowDTO.builder().year("2023").premiums(379.0).claims(235.0)
+                                    .profit(18.0).build(),
+                            FinancialDashboardDTO.ChartRowDTO.builder().year("2024").premiums(473.0).claims(282.0)
+                                    .profit(21.0).build()))
+                    .segments(java.util.List.of(
+                            FinancialDashboardDTO.SegmentDTO.builder().name("Não-Vida").value(72.0).color("#164993")
+                                    .build(),
+                            FinancialDashboardDTO.SegmentDTO.builder().name("Vida").value(28.0).color("#e63c2e")
+                                    .build()))
+                    .marketShareNote("Liderança consolidada com 37% de quota de mercado GERAL em Angola.")
+                    .build();
         }
         return dto;
     }
@@ -1374,7 +1533,6 @@ public class InvestorContentService {
             throw new RuntimeException("Failed to save financial_dashboard.json", e);
         }
     }
-
 
     @Cacheable(value = "investorContent", key = "'ceoMessage'")
     public CeoMessageDTO getCeoMessage() {
@@ -1430,94 +1588,101 @@ public class InvestorContentService {
     // ---- Mappers ----
     private HistoricalMilestoneDTO toMilestoneDTO(HistoricalMilestone e) {
         return HistoricalMilestoneDTO.builder()
-            .id(e.getId()).title(e.getTitle()).description(e.getDescription())
-            .milestoneYear(e.getMilestoneYear()).displayOrder(e.getDisplayOrder())
-            .imageUrl(e.getImageUrl()).contentHtml(e.getContentHtml()).eventTitle(e.getEventTitle())
-            .createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).title(e.getTitle()).description(e.getDescription())
+                .milestoneYear(e.getMilestoneYear()).displayOrder(e.getDisplayOrder())
+                .imageUrl(e.getImageUrl()).contentHtml(e.getContentHtml()).eventTitle(e.getEventTitle())
+                .createdAt(e.getCreatedAt()).build();
     }
 
     private BoardMemberDTO toBoardMemberDTO(BoardMember e) {
         return BoardMemberDTO.builder()
-            .id(e.getId()).fullName(e.getFullName()).role(e.getRole()).bio(e.getBio())
-            .cvDocumentUrl(e.getCvDocumentUrl()).photoUrl(e.getPhotoUrl()).displayOrder(e.getDisplayOrder()).createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).fullName(e.getFullName()).role(e.getRole()).bio(e.getBio())
+                .cvDocumentUrl(e.getCvDocumentUrl()).photoUrl(e.getPhotoUrl()).displayOrder(e.getDisplayOrder())
+                .createdAt(e.getCreatedAt()).build();
     }
 
     private CorporateGovernanceReportDTO toGovernanceReportDTO(CorporateGovernanceReport e) {
         return CorporateGovernanceReportDTO.builder()
-            .id(e.getId()).title(e.getTitle()).documentUrl(e.getDocumentUrl()).reportYear(e.getReportYear())
-            .language(e.getLanguage()).createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).title(e.getTitle()).documentUrl(e.getDocumentUrl()).reportYear(e.getReportYear())
+                .language(e.getLanguage()).createdAt(e.getCreatedAt()).build();
     }
 
     private FinancialStatementDTO toFinancialStatementDTO(FinancialStatement e) {
         return FinancialStatementDTO.builder()
-            .id(e.getId()).year(e.getYear()).title(e.getTitle()).documentUrl(e.getDocumentUrl())
-            .statementType(e.getStatementType()).language(e.getLanguage()).createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).year(e.getYear()).title(e.getTitle()).documentUrl(e.getDocumentUrl())
+                .statementType(e.getStatementType()).language(e.getLanguage()).createdAt(e.getCreatedAt()).build();
     }
 
     private BusinessIndicatorDTO toBusinessIndicatorDTO(BusinessIndicator e) {
         return BusinessIndicatorDTO.builder()
-            .id(e.getId()).title(e.getTitle()).indicatorValue(e.getIndicatorValue()).numericValue(e.getNumericValue())
-            .periodYear(e.getPeriodYear()).periodQuarter(e.getPeriodQuarter()).category(e.getCategory()).unit(e.getUnit()).createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).title(e.getTitle()).indicatorValue(e.getIndicatorValue())
+                .numericValue(e.getNumericValue())
+                .periodYear(e.getPeriodYear()).periodQuarter(e.getPeriodQuarter()).category(e.getCategory())
+                .unit(e.getUnit()).createdAt(e.getCreatedAt()).build();
     }
 
     private CommunicationDTO toCommunicationDTO(Communication e) {
         return CommunicationDTO.builder()
-            .id(e.getId()).title(e.getTitle()).communicationType(e.getCommunicationType()).summary(e.getSummary())
-            .documentUrl(e.getDocumentUrl()).publishedAt(e.getPublishedAt())
-            .slugId(e.getSlugId()).category(e.getCategory()).contentHtml(e.getContentHtml())
-            .imageUrl(e.getImageUrl()).author(e.getAuthor())
-            .displaySections(e.getDisplaySections())
-            .createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).title(e.getTitle()).communicationType(e.getCommunicationType()).summary(e.getSummary())
+                .documentUrl(e.getDocumentUrl()).publishedAt(e.getPublishedAt())
+                .slugId(e.getSlugId()).category(e.getCategory()).contentHtml(e.getContentHtml())
+                .imageUrl(e.getImageUrl()).author(e.getAuthor())
+                .displaySections(e.getDisplaySections())
+                .createdAt(e.getCreatedAt()).build();
     }
 
     private EventDTO toEventDTO(Event e) {
         return EventDTO.builder()
-            .id(e.getId()).title(e.getTitle()).description(e.getDescription()).eventDate(e.getEventDate()).endDate(e.getEndDate())
-            .location(e.getLocation()).eventType(e.getEventType()).createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).title(e.getTitle()).description(e.getDescription()).eventDate(e.getEventDate())
+                .endDate(e.getEndDate())
+                .location(e.getLocation()).eventType(e.getEventType()).createdAt(e.getCreatedAt()).build();
     }
 
     private SubsidiaryDTO toSubsidiaryDTO(Subsidiary e) {
         return SubsidiaryDTO.builder()
-            .id(e.getId()).entityName(e.getEntityName()).description(e.getDescription()).participationPercentage(e.getParticipationPercentage())
-            .country(e.getCountry()).websiteUrl(e.getWebsiteUrl()).createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).entityName(e.getEntityName()).description(e.getDescription())
+                .participationPercentage(e.getParticipationPercentage())
+                .country(e.getCountry()).websiteUrl(e.getWebsiteUrl()).createdAt(e.getCreatedAt()).build();
     }
 
     private GeneralAssemblyDocumentDTO toGeneralAssemblyDocumentDTO(GeneralAssemblyDocument e) {
         return GeneralAssemblyDocumentDTO.builder()
-            .id(e.getId()).assemblyYear(e.getAssemblyYear()).title(e.getTitle()).documentUrl(e.getDocumentUrl())
-            .assemblyDate(e.getAssemblyDate()).documentType(e.getDocumentType())
-            .assemblyId(e.getAssembly() != null ? e.getAssembly().getId() : null)
-            .fileSizeLabel(e.getFileSizeLabel())
-            .createdAt(e.getCreatedAt()).build();
+                .id(e.getId()).assemblyYear(e.getAssemblyYear()).title(e.getTitle()).documentUrl(e.getDocumentUrl())
+                .assemblyDate(e.getAssemblyDate()).documentType(e.getDocumentType())
+                .assemblyId(e.getAssembly() != null ? e.getAssembly().getId() : null)
+                .fileSizeLabel(e.getFileSizeLabel())
+                .createdAt(e.getCreatedAt()).build();
     }
 
     private GeneralAssemblyDTO toGeneralAssemblyDTO(GeneralAssembly e) {
         List<String> agenda = e.getAgendaItems().stream()
-            .map(GeneralAssemblyAgendaItem::getItemText).collect(Collectors.toList());
+                .map(GeneralAssemblyAgendaItem::getItemText).collect(Collectors.toList());
         List<GeneralAssemblyDocumentDTO> docs = e.getDocuments().stream()
-            .map(this::toGeneralAssemblyDocumentDTO).collect(Collectors.toList());
+                .map(this::toGeneralAssemblyDocumentDTO).collect(Collectors.toList());
         return GeneralAssemblyDTO.builder()
-            .id(e.getId()).slugId(e.getSlugId()).title(e.getTitle())
-            .meetingYear(e.getMeetingYear()).meetingDate(e.getMeetingDate())
-            .status(e.getStatus()).assemblyType(e.getAssemblyType()).summary(e.getSummary())
-            .displayOrder(e.getDisplayOrder()).agendaItems(agenda).documents(docs).build();
+                .id(e.getId()).slugId(e.getSlugId()).title(e.getTitle())
+                .meetingYear(e.getMeetingYear()).meetingDate(e.getMeetingDate())
+                .status(e.getStatus()).assemblyType(e.getAssemblyType()).summary(e.getSummary())
+                .displayOrder(e.getDisplayOrder()).agendaItems(agenda).documents(docs).build();
     }
 
     private ShareholderStructureDTO toShareholderStructureDTO(ShareholderStructure e) {
         return ShareholderStructureDTO.builder()
-            .id(e.getId()).shareholderName(e.getShareholderName()).sharesLabel(e.getSharesLabel())
-            .percentage(e.getPercentage()).displayColor(e.getDisplayColor()).displayOrder(e.getDisplayOrder()).build();
+                .id(e.getId()).shareholderName(e.getShareholderName()).sharesLabel(e.getSharesLabel())
+                .percentage(e.getPercentage()).displayColor(e.getDisplayColor()).displayOrder(e.getDisplayOrder())
+                .build();
     }
 
     private InvestorRelationsDTO toInvestorRelationsDTO(InvestorRelations e) {
         return InvestorRelationsDTO.builder()
-            .id(e.getId()).email(e.getEmail()).phone(e.getPhone()).address(e.getAddress())
-            .otherContacts(e.getOtherContacts()).updatedAt(e.getUpdatedAt()).build();
+                .id(e.getId()).email(e.getEmail()).phone(e.getPhone()).address(e.getAddress())
+                .otherContacts(e.getOtherContacts()).updatedAt(e.getUpdatedAt()).build();
     }
 
     private ExternalAuditorDTO toExternalAuditorDTO(ExternalAuditor e) {
         return ExternalAuditorDTO.builder()
-            .id(e.getId()).auditorName(e.getAuditorName()).contactInfo(e.getContactInfo())
-            .periodFrom(e.getPeriodFrom()).periodTo(e.getPeriodTo()).current(e.isCurrent()).updatedAt(e.getUpdatedAt()).build();
+                .id(e.getId()).auditorName(e.getAuditorName()).contactInfo(e.getContactInfo())
+                .periodFrom(e.getPeriodFrom()).periodTo(e.getPeriodTo()).current(e.isCurrent())
+                .updatedAt(e.getUpdatedAt()).build();
     }
 }

@@ -16,13 +16,21 @@ public class FinancialDashboardDTO {
     private String headerTitle;
     private String headerDescription;
     private String powerBiUrl;
+    private String powerBiLabel;
+    private String powerBiButtonColor;
+    private String powerBiButtonTextColor;
+
+    private String chartTitle;
 
     private List<KpiCardDTO> kpis;
     private List<ChartRowDTO> chartData;
     private List<SegmentDTO> segments;
     private String marketShareNote;
 
-    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class KpiCardDTO {
         private String label;
         private String value;
@@ -32,7 +40,10 @@ public class FinancialDashboardDTO {
         private String color;
     }
 
-    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ChartRowDTO {
         private String year;
         private Double premiums;
@@ -40,10 +51,26 @@ public class FinancialDashboardDTO {
         private Double profit;
     }
 
-    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SegmentDTO {
         private String name;
         private Double value;
         private String color;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ButtonDTO {
+        private String label;
+        private String url;
+        private String bgColor;
+        private String textColor;
+    }
+
+    private List<ButtonDTO> buttons;
 }

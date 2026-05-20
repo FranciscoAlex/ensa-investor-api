@@ -25,7 +25,7 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:db/migration/oracle
+    locations: classpath:db/migration-oracle
     baseline-on-migrate: false
     repair-on-migrate: true
 

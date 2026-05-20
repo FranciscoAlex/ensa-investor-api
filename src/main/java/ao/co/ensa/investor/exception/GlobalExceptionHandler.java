@@ -10,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -115,6 +116,18 @@ public class GlobalExceptionHandler {
             .message("One or more fields have validation errors")
             .timestamp(LocalDateTime.now())
             .validationErrors(errors)
+            .build();
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        log.warn("Malformed request body: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Bad Request")
+            .message("Malformed or unreadable request body")
+            .timestamp(LocalDateTime.now())
             .build();
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }

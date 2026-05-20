@@ -110,6 +110,8 @@ public class FallbackDataSourceConfig {
                 log.info("Skipping Flyway migration — fallback Railway MySQL is already migrated");
                 return;
             }
+            log.info("Running Flyway repair to clear any failed migration entries...");
+            flyway.repair();
             flyway.migrate();
         };
     }

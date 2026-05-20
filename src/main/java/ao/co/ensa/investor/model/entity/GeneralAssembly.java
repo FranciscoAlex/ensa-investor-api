@@ -48,7 +48,7 @@ public class GeneralAssembly {
     @Builder.Default
     private String assemblyType = "Ordinária";
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String summary;
 
     @Column(name = "display_order")

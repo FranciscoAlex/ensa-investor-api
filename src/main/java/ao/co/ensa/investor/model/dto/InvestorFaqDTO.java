@@ -13,6 +13,14 @@ import java.util.List;
 @AllArgsConstructor
 public class InvestorFaqDTO {
     private String updatedAt;
+    private String supportEyebrow;
+    private String supportTitle;
+    private String supportDescription;
+    private String responsibleName;
+    private String responsibleRole;
+    private String responsibleEmail;
+    private String responsiblePhone;
+    private String responsiblePhotoUrl;
     private List<FaqItemDTO> items;
 
     @Data

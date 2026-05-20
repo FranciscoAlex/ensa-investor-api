@@ -26,6 +26,21 @@ public class OrganMembersDTO {
         private String description;
         private String color;
         private String textColor;
+        private String transparencyTitle;
+        private String transparencyText;
+        // Transparency stats
+        private String stat1Value;
+        private String stat1Label;
+        private String stat2Value;
+        private String stat2Label;
+        // Transparency cards
+        private String card1Title;
+        private String card1Text;
+        private String card2Title;
+        private String card2Text;
+        private Boolean competenciasVisible;
+        private String competenciasTitle;
+        private String competenciasText;
         private List<OrganMemberDTO> members;
     }
 

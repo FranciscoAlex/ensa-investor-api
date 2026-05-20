@@ -18,4 +18,6 @@ public class WhoWeAreContentDTO {
     private String statsMarketShare;
     private String statsColaboradores;
     private String statsTopSeguradoras;
+    private String nossaJornadaLabel;
+    private String nossaHistoriaTitle;
 }
